@@ -1,41 +1,68 @@
-﻿import { NativeModules, Platform } from 'react-native';
+﻿import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
 
-interface ScrollGuardNativeModule {
-  checkUsageStatsPermission: () => Promise<boolean>;
-  requestUsageStatsPermission: () => void;
-  checkOverlayPermission: () => Promise<boolean>;
-  requestOverlayPermission: () => void;
-  startGuardService: () => Promise<boolean>;
-  stopGuardService: () => Promise<boolean>;
+export interface ReelScrolledEvent {
+  source: 'com.instagram.android' | 'com.google.android.youtube' | string;
+  timestamp: number;
+  totalScrollsToday?: number;
+}
+
+export interface ScreenTimeUpdateEvent {
+  source: 'com.instagram.android' | 'com.google.android.youtube' | string;
+  secondsSpent: number;
+  sessionDurationSeconds?: number;
+}
+
+export interface AppLifecycleEvent {
+  source: 'com.instagram.android' | 'com.google.android.youtube' | string;
+  timestamp: number;
+  sessionDurationSeconds?: number;
+}
+
+export interface SessionStats {
+  reelsScrolled: number;
+  timeSpentSeconds: number;
+}
+
+interface ScrollGuardNativeModuleInterface {
+  isAccessibilityServiceEnabled: () => Promise<boolean>;
+  openAccessibilitySettings: () => void;
+  getSessionStats: (packageName: string) => Promise<SessionStats>;
+  addListener: (eventName: string) => void;
+  removeListeners: (count: number) => void;
 }
 
 const { ScrollGuardModule } = NativeModules;
 
-export const NativeScrollGuard: ScrollGuardNativeModule = {
-  checkUsageStatsPermission: async () => {
+export const NativeScrollGuardModule: ScrollGuardNativeModuleInterface = {
+  isAccessibilityServiceEnabled: async () => {
     if (Platform.OS !== 'android') return false;
-    return ScrollGuardModule?.checkUsageStatsPermission?.() ?? false;
+    return ScrollGuardModule?.isAccessibilityServiceEnabled?.() ?? false;
   },
-  requestUsageStatsPermission: () => {
+  openAccessibilitySettings: () => {
     if (Platform.OS === 'android') {
-      ScrollGuardModule?.requestUsageStatsPermission?.();
+      ScrollGuardModule?.openAccessibilitySettings?.();
     }
   },
-  checkOverlayPermission: async () => {
-    if (Platform.OS !== 'android') return false;
-    return ScrollGuardModule?.checkOverlayPermission?.() ?? false;
-  },
-  requestOverlayPermission: () => {
-    if (Platform.OS === 'android') {
-      ScrollGuardModule?.requestOverlayPermission?.();
+  getSessionStats: async (packageName: string) => {
+    if (Platform.OS !== 'android') {
+      return { reelsScrolled: 0, timeSpentSeconds: 0 };
     }
+    return (
+      ScrollGuardModule?.getSessionStats?.(packageName) ?? {
+        reelsScrolled: 0,
+        timeSpentSeconds: 0,
+      }
+    );
   },
-  startGuardService: async () => {
-    if (Platform.OS !== 'android') return false;
-    return ScrollGuardModule?.startGuardService?.() ?? false;
+  addListener: (eventName: string) => {
+    ScrollGuardModule?.addListener?.(eventName);
   },
-  stopGuardService: async () => {
-    if (Platform.OS !== 'android') return false;
-    return ScrollGuardModule?.stopGuardService?.() ?? false;
+  removeListeners: (count: number) => {
+    ScrollGuardModule?.removeListeners?.(count);
   },
 };
+
+export const ScrollGuardEventEmitter =
+  Platform.OS === 'android' && ScrollGuardModule
+    ? new NativeEventEmitter(ScrollGuardModule)
+    : null;
