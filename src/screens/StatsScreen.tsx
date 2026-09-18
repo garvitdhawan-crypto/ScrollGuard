@@ -4,7 +4,7 @@ import { theme } from '../theme';
 import { useAppStore } from '../store';
 
 export const StatsScreen: React.FC = () => {
-  const { streakDays, xp, level } = useAppStore();
+  const { currentStreak, longestStreak, xp, level } = useAppStore();
 
   return (
     <View style={styles.container}>
@@ -21,7 +21,7 @@ export const StatsScreen: React.FC = () => {
         <View style={styles.badgeItem}>
           <Text style={styles.badgeIcon}>🛡️</Text>
           <Text style={styles.badgeTitle}>Fortress</Text>
-          <Text style={styles.badgeDesc}>{streakDays} Day Streak</Text>
+          <Text style={styles.badgeDesc}>{currentStreak}d (Best {longestStreak}d)</Text>
         </View>
         <View style={styles.badgeItem}>
           <Text style={styles.badgeIcon}>⚡</Text>

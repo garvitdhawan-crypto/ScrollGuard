@@ -1,6 +1,16 @@
 ﻿import { create } from 'zustand';
 import { RoastEngine, RoastIntensity, RoastResult } from '../services/RoastEngine';
 
+export type KittenStage = 'healthy' | 'tired' | 'sick' | 'critical' | 'dead';
+
+export interface PetState {
+  hasAppeared: boolean;
+  healthPercent: number; // 0 - 100
+  stage: KittenStage;
+  revivesRemaining: number;
+  isDead: boolean;
+}
+
 export interface BlockedApp {
   id: string;
   packageName: string;
@@ -13,13 +23,27 @@ export interface BlockedApp {
 }
 
 interface AppState {
-  streakDays: number;
+  // Onboarding
+  hasOnboarded: boolean;
+  completeOnboarding: () => void;
+
+  // Streaks
+  currentStreak: number;
+  longestStreak: number;
+  dailyReelThreshold: number;
+  dailyTimeThresholdMinutes: number;
+
+  // Level & Guard
   xp: number;
   level: number;
   isGuardActive: boolean;
   roastIntensity: RoastIntensity;
   currentRoast: RoastResult | null;
   blockedApps: BlockedApp[];
+
+  // Kitten Companion
+  pet: PetState;
+  reviveKitten: () => void;
 
   // Actions
   toggleGuard: () => void;
@@ -29,10 +53,20 @@ interface AppState {
   updateScreenTime: (packageName: string, seconds: number) => void;
   updateAppLimits: (id: string, limitMinutes: number, limitScrolls: number) => void;
   refreshRoast: (packageName?: string) => void;
+  evaluatePetState: () => void;
 }
 
+const MAX_DEADLY_REELS = 700;
+
 export const useAppStore = create<AppState>((set, get) => ({
-  streakDays: 7,
+  hasOnboarded: false,
+  completeOnboarding: () => set({ hasOnboarded: true }),
+
+  currentStreak: 5,
+  longestStreak: 12,
+  dailyReelThreshold: 50,
+  dailyTimeThresholdMinutes: 25,
+
   xp: 1420,
   level: 4,
   isGuardActive: true,
@@ -42,6 +76,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     escalationLevel: 'mild',
     roastStyle: 'calm',
   },
+
+  pet: {
+    hasAppeared: false,
+    healthPercent: 100,
+    stage: 'healthy',
+    revivesRemaining: 1,
+    isDead: false,
+  },
+
   blockedApps: [
     {
       id: '1',
@@ -49,8 +92,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       appName: 'Instagram Reels',
       dailyLimitMinutes: 20,
       dailyLimitScrolls: 40,
-      timeSpentSecondsToday: 14 * 60 + 25,
-      reelsScrolledToday: 34,
+      timeSpentSecondsToday: 0,
+      reelsScrolledToday: 0,
       isBlocked: false,
     },
     {
@@ -59,9 +102,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       appName: 'YouTube Shorts',
       dailyLimitMinutes: 15,
       dailyLimitScrolls: 30,
-      timeSpentSecondsToday: 18 * 60 + 10,
-      reelsScrolledToday: 48,
-      isBlocked: true,
+      timeSpentSecondsToday: 0,
+      reelsScrolledToday: 0,
+      isBlocked: false,
     },
   ],
 
@@ -92,6 +135,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       });
       return { blockedApps: updated };
     });
+    get().evaluatePetState();
     get().refreshRoast(packageName);
   },
 
@@ -112,7 +156,70 @@ export const useAppStore = create<AppState>((set, get) => ({
       });
       return { blockedApps: updated };
     });
+    get().evaluatePetState();
     get().refreshRoast(packageName);
+  },
+
+  evaluatePetState: () => {
+    const { blockedApps, pet } = get();
+    const totalReelsToday = blockedApps.reduce(
+      (sum, app) => sum + app.reelsScrolledToday,
+      0,
+    );
+
+    if (totalReelsToday === 0 && !pet.hasAppeared) {
+      return;
+    }
+
+    // Health drops proportionally from 100% to 0% as total scrolls reach 700
+    const healthLeft = Math.max(
+      0,
+      Math.round(((MAX_DEADLY_REELS - totalReelsToday) / MAX_DEADLY_REELS) * 100),
+    );
+
+    let stage: KittenStage = 'healthy';
+    let isDead = false;
+
+    if (totalReelsToday >= MAX_DEADLY_REELS || healthLeft <= 0) {
+      stage = 'dead';
+      isDead = true;
+    } else if (totalReelsToday >= 550 || healthLeft <= 20) {
+      stage = 'critical';
+    } else if (totalReelsToday >= 350 || healthLeft <= 50) {
+      stage = 'sick';
+    } else if (totalReelsToday >= 150 || healthLeft <= 75) {
+      stage = 'tired';
+    } else {
+      stage = 'healthy';
+    }
+
+    set({
+      pet: {
+        ...pet,
+        hasAppeared: true,
+        healthPercent: healthLeft,
+        stage,
+        isDead,
+      },
+    });
+  },
+
+  reviveKitten: () => {
+    set((state) => {
+      if (state.pet.revivesRemaining <= 0) {
+        return state;
+      }
+      return {
+        pet: {
+          ...state.pet,
+          hasAppeared: true,
+          healthPercent: 50,
+          stage: 'tired',
+          isDead: false,
+          revivesRemaining: state.pet.revivesRemaining - 1,
+        },
+      };
+    });
   },
 
   updateAppLimits: (id, limitMinutes, limitScrolls) =>
@@ -127,7 +234,7 @@ export const useAppStore = create<AppState>((set, get) => ({
                 app.timeSpentSecondsToday >= limitMinutes * 60 ||
                 app.reelsScrolledToday >= limitScrolls,
             }
-          : app
+          : app,
       ),
     })),
 
@@ -136,7 +243,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const targetApp = packageName
       ? blockedApps.find((a) => a.packageName === packageName)
       : blockedApps.reduce((prev, curr) =>
-          curr.reelsScrolledToday > prev.reelsScrolledToday ? curr : prev
+          curr.reelsScrolledToday > prev.reelsScrolledToday ? curr : prev,
         );
 
     if (!targetApp) return;
