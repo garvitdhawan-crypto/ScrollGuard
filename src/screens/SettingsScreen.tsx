@@ -51,6 +51,14 @@ export const SettingsScreen: React.FC = () => {
           </Text>
         </View>
 
+        {/* Item 4: Android 13+ Restricted Settings Guidance Note */}
+        <View style={styles.restrictedNote}>
+          <Text style={styles.restrictedTitle}>⚠️ Android 13+ "Restricted Setting" Fix:</Text>
+          <Text style={styles.restrictedText}>
+            If the Accessibility toggle is greyed out in Android Settings, go to phone Settings ➔ Apps ➔ ScrollGuard ➔ tap the three dots in the top right ➔ tap "Allow restricted settings", then return here.
+          </Text>
+        </View>
+
         {!isAccessGranted && (
           <View style={styles.stepsContainer}>
             <Text style={styles.stepsHeading}>How to Enable:</Text>
@@ -194,6 +202,25 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: theme.colors.textSecondary,
     lineHeight: 15,
+  },
+  restrictedNote: {
+    backgroundColor: 'rgba(255, 184, 0, 0.1)',
+    borderWidth: 1,
+    borderColor: theme.colors.warning,
+    padding: theme.spacing.sm,
+    borderRadius: theme.borderRadius.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  restrictedTitle: {
+    fontSize: 11,
+    fontWeight: theme.typography.fontWeight.heavy,
+    color: theme.colors.warning,
+    marginBottom: 2,
+  },
+  restrictedText: {
+    fontSize: 10,
+    color: theme.colors.textPrimary,
+    lineHeight: 14,
   },
   stepsContainer: {
     marginVertical: theme.spacing.xs,

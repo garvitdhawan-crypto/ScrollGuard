@@ -1,5 +1,5 @@
-﻿import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+﻿import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, AppState, AppStateStatus } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../theme';
@@ -20,7 +20,29 @@ export const HomeScreen: React.FC = () => {
     isLockActive,
     recordReelScroll,
     updateScreenTime,
+    checkAndPerformDailyRollover,
   } = useAppStore();
+
+  const appState = useRef(AppState.currentState);
+
+  // Run daily rollover check on mount and whenever app returns to foreground
+  useEffect(() => {
+    checkAndPerformDailyRollover();
+
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (
+        (appState.current || '').match(/inactive|background/) &&
+        nextAppState === 'active'
+      ) {
+        checkAndPerformDailyRollover();
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [checkAndPerformDailyRollover]);
 
   // Listen for live native accessibility events
   useEffect(() => {
