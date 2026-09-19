@@ -9,5 +9,6 @@
 export type MainTabParamList = {
   Home: undefined;
   Guard: undefined;
+  Challenges: undefined;
   Stats: undefined;
 };

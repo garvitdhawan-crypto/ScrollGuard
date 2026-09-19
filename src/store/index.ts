@@ -24,6 +24,26 @@ export interface BlockedApp {
   isBlocked: boolean;
 }
 
+export type ChallengeType =
+  | 'daily_reel_cap'
+  | 'daily_time_cap'
+  | 'kitten_vitality'
+  | 'streak_milestone'
+  | 'zero_overrides';
+
+export interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  type: ChallengeType;
+  category: 'daily' | 'weekly';
+  targetValue: number;
+  currentValue: number;
+  completed: boolean;
+  rewardClaimed: boolean;
+  xpReward: number;
+}
+
 interface AppState {
   // Onboarding
   hasOnboarded: boolean;
@@ -63,6 +83,15 @@ interface AppState {
   pet: PetState;
   reviveKitten: () => void;
 
+  // Challenge Mode & 1-Year Reward
+  challenges: Challenge[];
+  lifetimeChallengesCompleted: number;
+  isPremiumRewardUnlocked: boolean;
+  showCelebrationModal: boolean;
+  claimChallengeReward: (challengeId: string) => void;
+  dismissCelebrationModal: () => void;
+  evaluateChallenges: () => void;
+
   // Actions
   toggleGuard: () => void;
   setRoastIntensity: (intensity: RoastIntensity) => void;
@@ -89,10 +118,72 @@ const getYesterdayDateString = (): string => {
   return d.toISOString().split('T')[0];
 };
 
+const INITIAL_CHALLENGES: Challenge[] = [
+  {
+    id: 'ch_1',
+    title: 'Sub-300 Reel Discipline',
+    description: 'Keep your total reels scrolled across all apps under 300 today.',
+    type: 'daily_reel_cap',
+    category: 'daily',
+    targetValue: 300,
+    currentValue: 0,
+    completed: false,
+    rewardClaimed: false,
+    xpReward: 150,
+  },
+  {
+    id: 'ch_2',
+    title: 'Detox Under 20m',
+    description: 'Stay under 20 total minutes of short-form feed time today.',
+    type: 'daily_time_cap',
+    category: 'daily',
+    targetValue: 20,
+    currentValue: 0,
+    completed: false,
+    rewardClaimed: false,
+    xpReward: 150,
+  },
+  {
+    id: 'ch_3',
+    title: 'Kitten Guardian',
+    description: 'Keep your kitten companion vitality at or above 50% HP today.',
+    type: 'kitten_vitality',
+    category: 'daily',
+    targetValue: 50,
+    currentValue: 100,
+    completed: false,
+    rewardClaimed: false,
+    xpReward: 200,
+  },
+  {
+    id: 'ch_4',
+    title: 'Fortress Momentum',
+    description: 'Reach or sustain an active streak of at least 3 days.',
+    type: 'streak_milestone',
+    category: 'weekly',
+    targetValue: 3,
+    currentValue: 0,
+    completed: false,
+    rewardClaimed: false,
+    xpReward: 350,
+  },
+  {
+    id: 'ch_5',
+    title: 'Zero Overrides Day',
+    description: 'Complete the day without using any "5 more minutes" overrides.',
+    type: 'zero_overrides',
+    category: 'daily',
+    targetValue: 0,
+    currentValue: 0,
+    completed: false,
+    rewardClaimed: false,
+    xpReward: 175,
+  },
+];
+
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
-      // Item 3: Initial onboarding flag set back to false for first-time launch
       hasOnboarded: false,
       completeOnboarding: () => set({ hasOnboarded: true }),
 
@@ -128,6 +219,7 @@ export const useAppStore = create<AppState>()(
             blockedApps: updatedApps,
           };
         });
+        get().evaluateChallenges();
       },
 
       xp: 0,
@@ -146,6 +238,98 @@ export const useAppStore = create<AppState>()(
         stage: 'healthy',
         revivesRemaining: 1,
         isDead: false,
+      },
+
+      // Challenges & 1-Year Premium Milestone
+      challenges: INITIAL_CHALLENGES,
+      lifetimeChallengesCompleted: 0,
+      isPremiumRewardUnlocked: false,
+      showCelebrationModal: false,
+
+      dismissCelebrationModal: () => set({ showCelebrationModal: false }),
+
+      claimChallengeReward: (challengeId: string) => {
+        set((state) => {
+          const ch = state.challenges.find((c) => c.id === challengeId);
+          if (!ch || !ch.completed || ch.rewardClaimed) {
+            return state;
+          }
+
+          const newTotalCompleted = state.lifetimeChallengesCompleted + 1;
+          const unlocksPremium = newTotalCompleted >= 10 && !state.isPremiumRewardUnlocked;
+
+          const updatedChallenges = state.challenges.map((c) =>
+            c.id === challengeId ? { ...c, rewardClaimed: true } : c,
+          );
+
+          return {
+            challenges: updatedChallenges,
+            xp: state.xp + ch.xpReward,
+            lifetimeChallengesCompleted: newTotalCompleted,
+            isPremiumRewardUnlocked: state.isPremiumRewardUnlocked || unlocksPremium,
+            showCelebrationModal: unlocksPremium ? true : state.showCelebrationModal,
+          };
+        });
+      },
+
+      evaluateChallenges: () => {
+        const {
+          blockedApps,
+          pet,
+          currentStreak,
+          overridesToday,
+          challenges,
+        } = get();
+
+        const totalReelsToday = blockedApps.reduce(
+          (acc, a) => acc + a.reelsScrolledToday,
+          0,
+        );
+        const totalMinutesToday = blockedApps.reduce(
+          (acc, a) => acc + Math.floor(a.timeSpentSecondsToday / 60),
+          0,
+        );
+
+        const updated = challenges.map((ch) => {
+          let currentVal = ch.currentValue;
+          let isComplete = ch.completed;
+
+          switch (ch.type) {
+            case 'daily_reel_cap':
+              currentVal = totalReelsToday;
+              // Completed if active and under limit
+              isComplete = totalReelsToday <= ch.targetValue;
+              break;
+
+            case 'daily_time_cap':
+              currentVal = totalMinutesToday;
+              isComplete = totalMinutesToday <= ch.targetValue;
+              break;
+
+            case 'kitten_vitality':
+              currentVal = pet.healthPercent;
+              isComplete = pet.healthPercent >= ch.targetValue && !pet.isDead;
+              break;
+
+            case 'streak_milestone':
+              currentVal = currentStreak;
+              isComplete = currentStreak >= ch.targetValue;
+              break;
+
+            case 'zero_overrides':
+              currentVal = overridesToday;
+              isComplete = overridesToday === 0;
+              break;
+          }
+
+          return {
+            ...ch,
+            currentValue: currentVal,
+            completed: isComplete,
+          };
+        });
+
+        set({ challenges: updated });
       },
 
       blockedApps: [
@@ -180,7 +364,6 @@ export const useAppStore = create<AppState>()(
 
       addXp: (points) => set((state) => ({ xp: state.xp + points })),
 
-      // Item 2: Streak Rollover & Daily Reset Logic
       checkAndPerformDailyRollover: () => {
         const today = getTodayDateString();
         const yesterday = getYesterdayDateString();
@@ -194,7 +377,6 @@ export const useAppStore = create<AppState>()(
           pet,
         } = get();
 
-        // If already evaluated today, nothing to roll over
         if (lastActiveDate === today) {
           return;
         }
@@ -210,7 +392,6 @@ export const useAppStore = create<AppState>()(
 
         let newStreak = currentStreak;
 
-        // Check if yesterday was disciplined
         if (lastActiveDate === yesterday) {
           const stayedUnderLimit =
             totalReelsYesterday <= dailyReelThreshold &&
@@ -219,16 +400,14 @@ export const useAppStore = create<AppState>()(
           if (stayedUnderLimit) {
             newStreak = currentStreak + 1;
           } else {
-            newStreak = 0; // Broke discipline
+            newStreak = 0;
           }
         } else {
-          // Missed one or more days entirely -> streak reset
           newStreak = 0;
         }
 
         const newLongest = Math.max(longestStreak, newStreak);
 
-        // Reset today's app metrics for the fresh new day
         const resetApps = blockedApps.map((app) => ({
           ...app,
           timeSpentSecondsToday: 0,
@@ -236,7 +415,6 @@ export const useAppStore = create<AppState>()(
           isBlocked: false,
         }));
 
-        // Naturally resurrect or refresh kitten if disciplined
         let updatedPet = { ...pet };
         if (pet.isDead && newStreak > 0) {
           updatedPet = {
@@ -253,6 +431,14 @@ export const useAppStore = create<AppState>()(
           };
         }
 
+        // Refresh daily challenges on new day
+        const refreshedChallenges = INITIAL_CHALLENGES.map((ch) => ({
+          ...ch,
+          currentValue: 0,
+          completed: false,
+          rewardClaimed: false,
+        }));
+
         set({
           lastActiveDate: today,
           currentStreak: newStreak,
@@ -261,7 +447,10 @@ export const useAppStore = create<AppState>()(
           blockedApps: resetApps,
           pet: updatedPet,
           isLockActive: false,
+          challenges: refreshedChallenges,
         });
+
+        get().evaluateChallenges();
       },
 
       recordReelScroll: (packageName) => {
@@ -288,6 +477,7 @@ export const useAppStore = create<AppState>()(
           };
         });
         get().evaluatePetState();
+        get().evaluateChallenges();
         get().refreshRoast(packageName);
         get().checkLockCondition();
       },
@@ -320,6 +510,7 @@ export const useAppStore = create<AppState>()(
           };
         });
         get().evaluatePetState();
+        get().evaluateChallenges();
         get().refreshRoast(packageName);
         get().checkLockCondition();
       },
@@ -391,6 +582,7 @@ export const useAppStore = create<AppState>()(
             },
           };
         });
+        get().evaluateChallenges();
       },
 
       updateAppLimits: (id, limitMinutes, limitScrolls) =>
@@ -446,6 +638,9 @@ export const useAppStore = create<AppState>()(
         level: state.level,
         pet: state.pet,
         blockedApps: state.blockedApps,
+        challenges: state.challenges,
+        lifetimeChallengesCompleted: state.lifetimeChallengesCompleted,
+        isPremiumRewardUnlocked: state.isPremiumRewardUnlocked,
       }),
     },
   ),

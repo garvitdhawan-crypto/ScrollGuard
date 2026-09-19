@@ -3,6 +3,7 @@ import { Text, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { HomeScreen } from '../screens/HomeScreen';
 import { GuardScreen } from '../screens/GuardScreen';
+import { ChallengesScreen } from '../screens/ChallengesScreen';
 import { StatsScreen } from '../screens/StatsScreen';
 import { MainTabParamList } from './types';
 import { theme } from '../theme';
@@ -15,6 +16,10 @@ const HomeTabIcon = ({ focused }: { focused: boolean }) => (
 
 const GuardTabIcon = ({ focused }: { focused: boolean }) => (
   <Text style={[styles.icon, focused && { color: theme.colors.primary }]}>🛡️</Text>
+);
+
+const ChallengesTabIcon = ({ focused }: { focused: boolean }) => (
+  <Text style={[styles.icon, focused && { color: theme.colors.primary }]}>🎯</Text>
 );
 
 const StatsTabIcon = ({ focused }: { focused: boolean }) => (
@@ -36,7 +41,7 @@ export const MainTabs: React.FC = () => {
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.textMuted,
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '600',
         },
       }}
@@ -55,6 +60,14 @@ export const MainTabs: React.FC = () => {
         options={{
           tabBarLabel: 'Shield',
           tabBarIcon: GuardTabIcon,
+        }}
+      />
+      <Tab.Screen
+        name="Challenges"
+        component={ChallengesScreen}
+        options={{
+          tabBarLabel: 'Quests',
+          tabBarIcon: ChallengesTabIcon,
         }}
       />
       <Tab.Screen
