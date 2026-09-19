@@ -1,22 +1,31 @@
 ﻿import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../theme';
 import { useAppStore } from '../store';
+import { TimeGraveyard } from '../components';
+import { RootStackParamList } from '../navigation/types';
 
 export const StatsScreen: React.FC = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { currentStreak, longestStreak, xp, level } = useAppStore();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Gamified Arena</Text>
-      <Text style={styles.subtitle}>Track dopamine resets, XP bonuses, and milestones</Text>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Text style={styles.title}>Gamified Arena & Debt</Text>
+      <Text style={styles.subtitle}>
+        Track dopamine resets, XP milestones, and lifetime lost hours
+      </Text>
 
+      {/* Tier Card */}
       <View style={styles.levelCard}>
         <Text style={styles.levelLabel}>CURRENT TIER</Text>
         <Text style={styles.levelValue}>Level {level}: Dopamine Monk</Text>
         <Text style={styles.xpText}>{xp} / 2000 XP to Level {level + 1}</Text>
       </View>
 
+      {/* Badges Grid */}
       <View style={styles.badgeGrid}>
         <View style={styles.badgeItem}>
           <Text style={styles.badgeIcon}>🛡️</Text>
@@ -29,7 +38,26 @@ export const StatsScreen: React.FC = () => {
           <Text style={styles.badgeDesc}>50 Intercepts</Text>
         </View>
       </View>
-    </View>
+
+      {/* Trigger Weekly Wrapped Story Card */}
+      <TouchableOpacity
+        style={styles.wrappedTriggerCard}
+        onPress={() => navigation.navigate('Wrapped')}
+        activeOpacity={0.8}
+      >
+        <View style={styles.wrappedTextCol}>
+          <Text style={styles.wrappedTag}>ANNUAL & WEEKLY HIGHLIGHT</Text>
+          <Text style={styles.wrappedTitle}>✨ Generate My Scroll Wrapped</Text>
+          <Text style={styles.wrappedDesc}>
+            Spotify-style visual breakdown of your week's reels and kitten status
+          </Text>
+        </View>
+        <Text style={styles.wrappedArrow}>→</Text>
+      </TouchableOpacity>
+
+      {/* Time Graveyard & Scroll Debt Section */}
+      <TimeGraveyard />
+    </ScrollView>
   );
 };
 
@@ -37,7 +65,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+  },
+  content: {
     padding: theme.spacing.md,
+    paddingBottom: theme.spacing.xl,
   },
   title: {
     fontSize: theme.typography.fontSize.xl,
@@ -77,6 +108,7 @@ const styles = StyleSheet.create({
   badgeGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: theme.spacing.md,
   },
   badgeItem: {
     flex: 0.48,
@@ -100,5 +132,42 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.textMuted,
     marginTop: theme.spacing.xs,
+  },
+  wrappedTriggerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1.5,
+    borderColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+  },
+  wrappedTextCol: {
+    flex: 1,
+    paddingRight: theme.spacing.sm,
+  },
+  wrappedTag: {
+    fontSize: 9,
+    fontWeight: theme.typography.fontWeight.heavy,
+    color: theme.colors.primary,
+    letterSpacing: 1,
+  },
+  wrappedTitle: {
+    fontSize: theme.typography.fontSize.sm + 1,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.textPrimary,
+    marginTop: 2,
+  },
+  wrappedDesc: {
+    fontSize: 11,
+    color: theme.colors.textSecondary,
+    marginTop: 2,
+  },
+  wrappedArrow: {
+    fontSize: 22,
+    color: theme.colors.primary,
+    fontWeight: 'bold',
   },
 });

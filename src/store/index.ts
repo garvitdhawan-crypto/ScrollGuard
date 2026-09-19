@@ -33,6 +33,19 @@ interface AppState {
   dailyReelThreshold: number;
   dailyTimeThresholdMinutes: number;
 
+  // Historical & Graveyard / Scroll Debt
+  lifetimeMinutesLost: number;
+  lifetimeReelsScrolled: number;
+  weekMinutesLost: number;
+  weekReelsScrolled: number;
+
+  // Focus Lock & Overrides
+  isLockActive: boolean;
+  overridesToday: number;
+  triggerLock: () => void;
+  dismissLock: () => void;
+  requestOverride: (extraMinutes: number) => void;
+
   // Level & Guard
   xp: number;
   level: number;
@@ -54,18 +67,47 @@ interface AppState {
   updateAppLimits: (id: string, limitMinutes: number, limitScrolls: number) => void;
   refreshRoast: (packageName?: string) => void;
   evaluatePetState: () => void;
+  checkLockCondition: () => void;
 }
 
 const MAX_DEADLY_REELS = 700;
 
 export const useAppStore = create<AppState>((set, get) => ({
-  hasOnboarded: false,
+  hasOnboarded: true,
   completeOnboarding: () => set({ hasOnboarded: true }),
 
   currentStreak: 5,
   longestStreak: 12,
   dailyReelThreshold: 50,
   dailyTimeThresholdMinutes: 25,
+
+  // Baseline data for Time Graveyard / Debt & Wrapped
+  lifetimeMinutesLost: 1840, // ~30.6 hours
+  lifetimeReelsScrolled: 3420,
+  weekMinutesLost: 290, // ~4.8 hours
+  weekReelsScrolled: 512,
+
+  isLockActive: false,
+  overridesToday: 0,
+  triggerLock: () => set({ isLockActive: true }),
+  dismissLock: () => set({ isLockActive: false }),
+  requestOverride: (extraMinutes: number) => {
+    set((state) => {
+      const newOverrides = state.overridesToday + 1;
+      // Grant extra buffer across blocked apps
+      const updatedApps = state.blockedApps.map((app) => ({
+        ...app,
+        dailyLimitMinutes: app.dailyLimitMinutes + extraMinutes,
+        dailyLimitScrolls: app.dailyLimitScrolls + 20,
+        isBlocked: false,
+      }));
+      return {
+        overridesToday: newOverrides,
+        isLockActive: false,
+        blockedApps: updatedApps,
+      };
+    });
+  },
 
   xp: 1420,
   level: 4,
@@ -133,14 +175,24 @@ export const useAppStore = create<AppState>((set, get) => ({
         }
         return app;
       });
-      return { blockedApps: updated };
+      return {
+        blockedApps: updated,
+        lifetimeReelsScrolled: state.lifetimeReelsScrolled + 1,
+        weekReelsScrolled: state.weekReelsScrolled + 1,
+      };
     });
     get().evaluatePetState();
     get().refreshRoast(packageName);
+    get().checkLockCondition();
   },
 
   updateScreenTime: (packageName, seconds) => {
     set((state) => {
+      const prevSeconds =
+        state.blockedApps.find((a) => a.packageName === packageName)
+          ?.timeSpentSecondsToday || 0;
+      const diffMinutes = Math.max(0, Math.floor((seconds - prevSeconds) / 60));
+
       const updated = state.blockedApps.map((app) => {
         if (app.packageName === packageName) {
           const isBlocked =
@@ -154,10 +206,23 @@ export const useAppStore = create<AppState>((set, get) => ({
         }
         return app;
       });
-      return { blockedApps: updated };
+      return {
+        blockedApps: updated,
+        lifetimeMinutesLost: state.lifetimeMinutesLost + diffMinutes,
+        weekMinutesLost: state.weekMinutesLost + diffMinutes,
+      };
     });
     get().evaluatePetState();
     get().refreshRoast(packageName);
+    get().checkLockCondition();
+  },
+
+  checkLockCondition: () => {
+    const { blockedApps, isLockActive } = get();
+    const shouldLock = blockedApps.some((app) => app.isBlocked);
+    if (shouldLock && !isLockActive) {
+      set({ isLockActive: true });
+    }
   },
 
   evaluatePetState: () => {
@@ -171,7 +236,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       return;
     }
 
-    // Health drops proportionally from 100% to 0% as total scrolls reach 700
     const healthLeft = Math.max(
       0,
       Math.round(((MAX_DEADLY_REELS - totalReelsToday) / MAX_DEADLY_REELS) * 100),

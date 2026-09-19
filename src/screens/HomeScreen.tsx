@@ -6,7 +6,7 @@ import { theme } from '../theme';
 import { useAppStore } from '../store';
 import { RootStackParamList } from '../navigation/types';
 import { HabitGuardService } from '../services';
-import { KittenCompanion } from '../components';
+import { KittenCompanion, RoastCard } from '../components';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -17,7 +17,7 @@ export const HomeScreen: React.FC = () => {
     isGuardActive,
     toggleGuard,
     currentRoast,
-    roastIntensity,
+    isLockActive,
     recordReelScroll,
     updateScreenTime,
   } = useAppStore();
@@ -35,23 +35,26 @@ export const HomeScreen: React.FC = () => {
     return () => unsubscribe();
   }, [recordReelScroll, updateScreenTime]);
 
-  const getEscalationColor = () => {
-    switch (currentRoast?.escalationLevel) {
-      case 'critical':
-        return theme.colors.error;
-      case 'high':
-        return theme.colors.accent;
-      case 'moderate':
-        return theme.colors.warning;
-      default:
-        return theme.colors.primary;
+  // Navigate to lock overlay when triggered
+  useEffect(() => {
+    if (isLockActive) {
+      navigation.navigate('LockOverlay');
     }
-  };
+  }, [isLockActive, navigation]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.title}>ScrollGuard</Text>
+        <View style={styles.topRow}>
+          <Text style={styles.title}>ScrollGuard</Text>
+          <TouchableOpacity
+            style={styles.wrappedPill}
+            onPress={() => navigation.navigate('Wrapped')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.wrappedPillText}>✨ Wrapped</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.subtitle}>Autonomous Dopamine Defense System</Text>
       </View>
 
@@ -77,26 +80,8 @@ export const HomeScreen: React.FC = () => {
       {/* Centerpiece 1: Virtual Kitten Companion */}
       <KittenCompanion />
 
-      {/* Centerpiece 2: Live Escalating Roast Banner */}
-      <View style={[styles.roastCard, { borderColor: getEscalationColor() }]}>
-        <View style={styles.roastHeader}>
-          <Text style={[styles.roastBadge, { color: getEscalationColor() }]}>
-            🔥 {roastIntensity.toUpperCase()} ROAST • {currentRoast?.escalationLevel?.toUpperCase() || 'NORMAL'}
-          </Text>
-          <Text style={styles.roastStyleTag}>
-            {currentRoast?.roastStyle === 'flicker'
-              ? '⚡ SPEED FLICKING'
-              : currentRoast?.roastStyle === 'zombie'
-              ? '🧟 ZOMBIE TRANCE'
-              : currentRoast?.roastStyle === 'overload'
-              ? '☠️ OVERLOAD'
-              : '🛡️ GUARDING'}
-          </Text>
-        </View>
-        <Text style={styles.roastMessage}>
-          "{currentRoast?.message || 'Stay focused. No mindless scrolling detected yet.'}"
-        </Text>
-      </View>
+      {/* Centerpiece 2: Shareable Escalating Roast Card */}
+      <RoastCard roast={currentRoast} />
 
       {/* Shield Activation */}
       <View style={styles.guardCard}>
@@ -132,6 +117,17 @@ export const HomeScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
+      {/* Test Lock Overlay Preview Button */}
+      <TouchableOpacity
+        style={styles.simulateLockBtn}
+        onPress={() => navigation.navigate('LockOverlay')}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.simulateLockText}>
+          🚨 Preview Focus Mode Lock Overlay →
+        </Text>
+      </TouchableOpacity>
+
       {/* Permissions / Settings Shortcut */}
       <TouchableOpacity
         style={styles.actionButton}
@@ -159,11 +155,29 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.sm,
     marginBottom: theme.spacing.md,
   },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   title: {
     fontSize: theme.typography.fontSize.xxl,
     fontWeight: theme.typography.fontWeight.heavy,
     color: theme.colors.textPrimary,
     letterSpacing: 0.5,
+  },
+  wrappedPill: {
+    backgroundColor: theme.colors.surfaceVariant,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: theme.borderRadius.full,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+  },
+  wrappedPillText: {
+    fontSize: 11,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.primary,
   },
   subtitle: {
     fontSize: theme.typography.fontSize.sm,
@@ -203,37 +217,6 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginTop: 2,
   },
-  roastCard: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1.5,
-    marginBottom: theme.spacing.md,
-  },
-  roastHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.xs,
-  },
-  roastBadge: {
-    fontSize: 11,
-    fontWeight: theme.typography.fontWeight.heavy,
-    letterSpacing: 0.5,
-  },
-  roastStyleTag: {
-    fontSize: 10,
-    color: theme.colors.textMuted,
-    fontWeight: theme.typography.fontWeight.bold,
-  },
-  roastMessage: {
-    fontSize: theme.typography.fontSize.xs + 1,
-    fontWeight: theme.typography.fontWeight.semibold,
-    color: theme.colors.textPrimary,
-    lineHeight: 18,
-    marginTop: 4,
-    fontStyle: 'italic',
-  },
   guardCard: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
@@ -265,8 +248,22 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeight.bold,
     textTransform: 'uppercase',
   },
-  actionButton: {
+  simulateLockBtn: {
     paddingVertical: theme.spacing.sm,
+    backgroundColor: theme.colors.surfaceVariant,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.error,
+  },
+  simulateLockText: {
+    color: theme.colors.error,
+    fontSize: theme.typography.fontSize.xs,
+    fontWeight: theme.typography.fontWeight.bold,
+  },
+  actionButton: {
+    paddingVertical: theme.spacing.xs,
     alignItems: 'center',
   },
   actionButtonText: {

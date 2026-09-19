@@ -4,6 +4,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MainTabs } from './MainTabs';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
+import { WrappedScreen } from '../screens/WrappedScreen';
+import { LockOverlayScreen } from '../screens/LockOverlayScreen';
 import { RootStackParamList } from './types';
 import { theme } from '../theme';
 import { useAppStore } from '../store';
@@ -48,6 +50,22 @@ export const RootNavigator: React.FC = () => {
               options={{
                 title: 'Shield Configuration',
                 presentation: 'card',
+              }}
+            />
+            <Stack.Screen
+              name="Wrapped"
+              component={WrappedScreen}
+              options={{
+                headerShown: false,
+                presentation: 'modal',
+              }}
+            />
+            <Stack.Screen
+              name="LockOverlay"
+              component={LockOverlayScreen}
+              options={{
+                headerShown: false,
+                presentation: 'fullScreenModal',
               }}
             />
           </>
