@@ -1,9 +1,13 @@
 ﻿import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../theme';
 import { useAppStore, KittenStage } from '../store';
+import { RootStackParamList } from '../navigation/types';
 
 export const KittenCompanion: React.FC = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { pet, reviveKitten, blockedApps } = useAppStore();
 
   const totalReelsToday = blockedApps.reduce(
@@ -20,6 +24,15 @@ export const KittenCompanion: React.FC = () => {
           <Text style={styles.dormantDesc}>
             Your kitten rests peacefully. Scrolling short-form reels will awaken it and tie its vitality directly to your screen discipline.
           </Text>
+          <TouchableOpacity
+            style={styles.weeklyReportBtn}
+            onPress={() => navigation.navigate('CatReport')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.weeklyReportBtnText}>
+              📊 View 7-Day Cat Report →
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -109,6 +122,17 @@ export const KittenCompanion: React.FC = () => {
         </View>
       </View>
 
+      {/* Weekly Report Trigger Button */}
+      <TouchableOpacity
+        style={styles.catReportPill}
+        onPress={() => navigation.navigate('CatReport')}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.catReportPillText}>
+          🐱 View Weekly Cat Report Chronicle →
+        </Text>
+      </TouchableOpacity>
+
       {/* Dead / Revive CTA */}
       {pet.isDead && (
         <View style={styles.reviveContainer}>
@@ -171,6 +195,14 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     marginTop: 2,
     lineHeight: 16,
+  },
+  weeklyReportBtn: {
+    marginTop: 6,
+  },
+  weeklyReportBtnText: {
+    fontSize: 10,
+    color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeight.bold,
   },
   header: {
     marginBottom: theme.spacing.xs,
@@ -241,6 +273,19 @@ const styles = StyleSheet.create({
   healthBarFill: {
     height: '100%',
     borderRadius: theme.borderRadius.full,
+  },
+  catReportPill: {
+    marginTop: theme.spacing.sm,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.surfaceVariant,
+    alignItems: 'center',
+  },
+  catReportPillText: {
+    fontSize: 10,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.primary,
   },
   reviveContainer: {
     marginTop: theme.spacing.md,

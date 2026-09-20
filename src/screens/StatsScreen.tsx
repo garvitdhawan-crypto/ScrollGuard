@@ -39,21 +39,36 @@ export const StatsScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Trigger Weekly Wrapped Story Card */}
-      <TouchableOpacity
-        style={styles.wrappedTriggerCard}
-        onPress={() => navigation.navigate('Wrapped')}
-        activeOpacity={0.8}
-      >
-        <View style={styles.wrappedTextCol}>
-          <Text style={styles.wrappedTag}>ANNUAL & WEEKLY HIGHLIGHT</Text>
-          <Text style={styles.wrappedTitle}>✨ Generate My Scroll Wrapped</Text>
-          <Text style={styles.wrappedDesc}>
-            Spotify-style visual breakdown of your week's reels and kitten status
+      {/* Weekly Reports Row */}
+      <View style={styles.reportsRow}>
+        {/* Trigger Weekly Wrapped Story Card */}
+        <TouchableOpacity
+          style={styles.reportCard}
+          onPress={() => navigation.navigate('Wrapped')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.reportTag}>ANNUAL & WEEKLY</Text>
+          <Text style={styles.reportTitle}>✨ Scroll Wrapped</Text>
+          <Text style={styles.reportDesc}>
+            Summary of reels flicked and buried time
           </Text>
-        </View>
-        <Text style={styles.wrappedArrow}>→</Text>
-      </TouchableOpacity>
+        </TouchableOpacity>
+
+        {/* Trigger Weekly Cat Report */}
+        <TouchableOpacity
+          style={[styles.reportCard, styles.catReportCard]}
+          onPress={() => navigation.navigate('CatReport')}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.reportTag, { color: theme.colors.warning }]}>
+            PET CHRONICLE
+          </Text>
+          <Text style={styles.reportTitle}>🐱 Cat Report</Text>
+          <Text style={styles.reportDesc}>
+            7-day journey of kitten health & revivals
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Time Graveyard & Scroll Debt Section */}
       <TimeGraveyard />
@@ -133,41 +148,38 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     marginTop: theme.spacing.xs,
   },
-  wrappedTriggerCard: {
+  reportsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: theme.spacing.md,
+  },
+  reportCard: {
+    flex: 0.48,
     backgroundColor: theme.colors.surface,
     borderWidth: 1.5,
     borderColor: theme.colors.primary,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm + 2,
   },
-  wrappedTextCol: {
-    flex: 1,
-    paddingRight: theme.spacing.sm,
+  catReportCard: {
+    borderColor: theme.colors.warning,
   },
-  wrappedTag: {
-    fontSize: 9,
+  reportTag: {
+    fontSize: 8,
     fontWeight: theme.typography.fontWeight.heavy,
     color: theme.colors.primary,
-    letterSpacing: 1,
+    letterSpacing: 0.8,
   },
-  wrappedTitle: {
-    fontSize: theme.typography.fontSize.sm + 1,
+  reportTitle: {
+    fontSize: theme.typography.fontSize.xs + 2,
     fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.textPrimary,
     marginTop: 2,
   },
-  wrappedDesc: {
-    fontSize: 11,
+  reportDesc: {
+    fontSize: 10,
     color: theme.colors.textSecondary,
     marginTop: 2,
-  },
-  wrappedArrow: {
-    fontSize: 22,
-    color: theme.colors.primary,
-    fontWeight: 'bold',
+    lineHeight: 14,
   },
 });

@@ -6,6 +6,7 @@ import { SettingsScreen } from '../screens/SettingsScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { WrappedScreen } from '../screens/WrappedScreen';
 import { LockOverlayScreen } from '../screens/LockOverlayScreen';
+import { CatReportScreen } from '../screens/CatReportScreen';
 import { RootStackParamList } from './types';
 import { theme } from '../theme';
 import { useAppStore } from '../store';
@@ -55,6 +56,14 @@ export const RootNavigator: React.FC = () => {
             <Stack.Screen
               name="Wrapped"
               component={WrappedScreen}
+              options={{
+                headerShown: false,
+                presentation: 'modal',
+              }}
+            />
+            <Stack.Screen
+              name="CatReport"
+              component={CatReportScreen}
               options={{
                 headerShown: false,
                 presentation: 'modal',

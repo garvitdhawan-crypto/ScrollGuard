@@ -5,6 +5,16 @@ import { RoastEngine, RoastIntensity, RoastResult } from '../services/RoastEngin
 
 export type KittenStage = 'healthy' | 'tired' | 'sick' | 'critical' | 'dead';
 
+export interface DailyPetLog {
+  date: string;
+  dayName: string;
+  finalStage: KittenStage;
+  healthPercent: number;
+  reelsScrolled: number;
+  died: boolean;
+  revived: boolean;
+}
+
 export interface PetState {
   hasAppeared: boolean;
   healthPercent: number; // 0 - 100
@@ -79,8 +89,11 @@ interface AppState {
   currentRoast: RoastResult | null;
   blockedApps: BlockedApp[];
 
-  // Kitten Companion
+  // Kitten Companion & Weekly Report
   pet: PetState;
+  weeklyPetHistory: DailyPetLog[];
+  kittenDeathsThisWeek: number;
+  kittenRevivesThisWeek: number;
   reviveKitten: () => void;
 
   // Challenge Mode & 1-Year Reward
@@ -116,6 +129,11 @@ const getYesterdayDateString = (): string => {
   const d = new Date();
   d.setDate(d.getDate() - 1);
   return d.toISOString().split('T')[0];
+};
+
+const getDayName = (dateStr: string): string => {
+  const d = new Date(dateStr + 'T12:00:00Z');
+  return d.toLocaleDateString('en-US', { weekday: 'short' });
 };
 
 const INITIAL_CHALLENGES: Challenge[] = [
@@ -181,6 +199,64 @@ const INITIAL_CHALLENGES: Challenge[] = [
   },
 ];
 
+// Meaningful baseline history for initial render & preview
+const INITIAL_WEEKLY_PET_HISTORY: DailyPetLog[] = [
+  {
+    date: '2026-09-14',
+    dayName: 'Mon',
+    finalStage: 'healthy',
+    healthPercent: 88,
+    reelsScrolled: 84,
+    died: false,
+    revived: false,
+  },
+  {
+    date: '2026-09-15',
+    dayName: 'Tue',
+    finalStage: 'tired',
+    healthPercent: 65,
+    reelsScrolled: 245,
+    died: false,
+    revived: false,
+  },
+  {
+    date: '2026-09-16',
+    dayName: 'Wed',
+    finalStage: 'sick',
+    healthPercent: 42,
+    reelsScrolled: 406,
+    died: false,
+    revived: false,
+  },
+  {
+    date: '2026-09-17',
+    dayName: 'Thu',
+    finalStage: 'critical',
+    healthPercent: 18,
+    reelsScrolled: 574,
+    died: false,
+    revived: false,
+  },
+  {
+    date: '2026-09-18',
+    dayName: 'Fri',
+    finalStage: 'dead',
+    healthPercent: 0,
+    reelsScrolled: 712,
+    died: true,
+    revived: false,
+  },
+  {
+    date: '2026-09-19',
+    dayName: 'Sat',
+    finalStage: 'healthy',
+    healthPercent: 80,
+    reelsScrolled: 140,
+    died: false,
+    revived: true,
+  },
+];
+
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
@@ -194,7 +270,6 @@ export const useAppStore = create<AppState>()(
       dailyReelThreshold: 50,
       dailyTimeThresholdMinutes: 25,
 
-      // Historical Graveyard & Debt
       lifetimeMinutesLost: 0,
       lifetimeReelsScrolled: 0,
       weekMinutesLost: 0,
@@ -240,7 +315,11 @@ export const useAppStore = create<AppState>()(
         isDead: false,
       },
 
-      // Challenges & 1-Year Premium Milestone
+      // Weekly Pet History & Cat Report Data
+      weeklyPetHistory: INITIAL_WEEKLY_PET_HISTORY,
+      kittenDeathsThisWeek: 1,
+      kittenRevivesThisWeek: 1,
+
       challenges: INITIAL_CHALLENGES,
       lifetimeChallengesCompleted: 0,
       isPremiumRewardUnlocked: false,
@@ -297,7 +376,6 @@ export const useAppStore = create<AppState>()(
           switch (ch.type) {
             case 'daily_reel_cap':
               currentVal = totalReelsToday;
-              // Completed if active and under limit
               isComplete = totalReelsToday <= ch.targetValue;
               break;
 
@@ -375,6 +453,9 @@ export const useAppStore = create<AppState>()(
           currentStreak,
           longestStreak,
           pet,
+          weeklyPetHistory,
+          kittenDeathsThisWeek,
+          kittenRevivesThisWeek,
         } = get();
 
         if (lastActiveDate === today) {
@@ -408,6 +489,19 @@ export const useAppStore = create<AppState>()(
 
         const newLongest = Math.max(longestStreak, newStreak);
 
+        // Archive yesterday's pet history into rolling weekly log
+        const yesterdayLog: DailyPetLog = {
+          date: lastActiveDate,
+          dayName: getDayName(lastActiveDate),
+          finalStage: pet.stage,
+          healthPercent: pet.healthPercent,
+          reelsScrolled: totalReelsYesterday,
+          died: pet.isDead,
+          revived: false,
+        };
+
+        const updatedHistory = [...weeklyPetHistory, yesterdayLog].slice(-7);
+
         const resetApps = blockedApps.map((app) => ({
           ...app,
           timeSpentSecondsToday: 0,
@@ -416,6 +510,7 @@ export const useAppStore = create<AppState>()(
         }));
 
         let updatedPet = { ...pet };
+        let newRevives = kittenRevivesThisWeek;
         if (pet.isDead && newStreak > 0) {
           updatedPet = {
             ...pet,
@@ -423,6 +518,7 @@ export const useAppStore = create<AppState>()(
             healthPercent: 60,
             stage: 'healthy',
           };
+          newRevives += 1;
         } else if (!pet.isDead) {
           updatedPet = {
             ...pet,
@@ -431,7 +527,6 @@ export const useAppStore = create<AppState>()(
           };
         }
 
-        // Refresh daily challenges on new day
         const refreshedChallenges = INITIAL_CHALLENGES.map((ch) => ({
           ...ch,
           currentValue: 0,
@@ -448,6 +543,9 @@ export const useAppStore = create<AppState>()(
           pet: updatedPet,
           isLockActive: false,
           challenges: refreshedChallenges,
+          weeklyPetHistory: updatedHistory,
+          kittenDeathsThisWeek: pet.isDead ? kittenDeathsThisWeek + 1 : kittenDeathsThisWeek,
+          kittenRevivesThisWeek: newRevives,
         });
 
         get().evaluateChallenges();
@@ -524,7 +622,7 @@ export const useAppStore = create<AppState>()(
       },
 
       evaluatePetState: () => {
-        const { blockedApps, pet } = get();
+        const { blockedApps, pet, kittenDeathsThisWeek } = get();
         const totalReelsToday = blockedApps.reduce(
           (sum, app) => sum + app.reelsScrolledToday,
           0,
@@ -555,7 +653,11 @@ export const useAppStore = create<AppState>()(
           stage = 'healthy';
         }
 
+        const wasAlive = !pet.isDead;
+        const newDeaths = wasAlive && isDead ? kittenDeathsThisWeek + 1 : kittenDeathsThisWeek;
+
         set({
+          kittenDeathsThisWeek: newDeaths,
           pet: {
             ...pet,
             hasAppeared: true,
@@ -572,6 +674,7 @@ export const useAppStore = create<AppState>()(
             return state;
           }
           return {
+            kittenRevivesThisWeek: state.kittenRevivesThisWeek + 1,
             pet: {
               ...state.pet,
               hasAppeared: true,
@@ -637,6 +740,9 @@ export const useAppStore = create<AppState>()(
         xp: state.xp,
         level: state.level,
         pet: state.pet,
+        weeklyPetHistory: state.weeklyPetHistory,
+        kittenDeathsThisWeek: state.kittenDeathsThisWeek,
+        kittenRevivesThisWeek: state.kittenRevivesThisWeek,
         blockedApps: state.blockedApps,
         challenges: state.challenges,
         lifetimeChallengesCompleted: state.lifetimeChallengesCompleted,

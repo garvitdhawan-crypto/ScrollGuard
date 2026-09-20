@@ -4,6 +4,7 @@
   Settings: undefined;
   Wrapped: undefined;
   LockOverlay: undefined;
+  CatReport: undefined;
 };
 
 export type MainTabParamList = {
