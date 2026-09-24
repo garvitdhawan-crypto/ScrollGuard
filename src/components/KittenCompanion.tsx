@@ -5,6 +5,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { theme } from '../theme';
 import { useAppStore, KittenStage } from '../store';
 import { RootStackParamList } from '../navigation/types';
+import { AnimatedKitten } from './AnimatedKitten';
+import { DoodleCatHead, DoodleFlame } from './DoodleIcons';
 
 export const KittenCompanion: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -18,11 +20,11 @@ export const KittenCompanion: React.FC = () => {
   if (!pet.hasAppeared) {
     return (
       <View style={styles.dormantCard}>
-        <Text style={styles.dormantIcon}>💤</Text>
+        <DoodleCatHead color={theme.colors.textMuted} size={42} />
         <View style={styles.dormantTextContainer}>
-          <Text style={styles.dormantTitle}>Companion Asleep in Safety</Text>
+          <Text style={styles.dormantTitle}>Companion Asleep in Safety 💤</Text>
           <Text style={styles.dormantDesc}>
-            Your kitten rests peacefully. Scrolling short-form reels will awaken it and tie its vitality directly to your screen discipline.
+            Your kitten rests peacefully. Scrolling reels or shorts will awaken it and tie its vitality directly to your screen discipline.
           </Text>
           <TouchableOpacity
             style={styles.weeklyReportBtn}
@@ -42,35 +44,30 @@ export const KittenCompanion: React.FC = () => {
     switch (stage) {
       case 'healthy':
         return {
-          emoji: '🐱✨',
           status: 'HEALTHY & ENERGETIC',
           color: theme.colors.primary,
           speech: '“Purring softly... Thank you for staying present with me!”',
         };
       case 'tired':
         return {
-          emoji: '🐱💤',
           status: 'TIRED & DROOPING',
           color: theme.colors.warning,
           speech: '“*Yawn*... That is a lot of flicking. Can we put the phone down?”',
         };
       case 'sick':
         return {
-          emoji: '😿🌡️',
           status: 'SICK & WEAKENED',
           color: theme.colors.accent,
           speech: '“*Shivering*... The algorithm overload is making me sick...”',
         };
       case 'critical':
         return {
-          emoji: '🙀💔',
           status: 'CRITICAL CONDITION',
           color: theme.colors.error,
           speech: '“Fading fast! Approaching 700 reels... Please stop scrolling!”',
         };
       case 'dead':
         return {
-          emoji: '🪦👻',
           status: 'FALLEN COMPANION',
           color: theme.colors.textMuted,
           speech: '“Your kitten could not survive the 700-reel doom scroll. RIP.”',
@@ -82,11 +79,15 @@ export const KittenCompanion: React.FC = () => {
 
   return (
     <View style={[styles.card, { borderColor: details.color }]}>
+      {/* Hand-drawn sketch border badge */}
       <View style={styles.header}>
         <View style={styles.badgeRow}>
-          <Text style={[styles.statusBadge, { color: details.color }]}>
-            {details.status}
-          </Text>
+          <View style={styles.titleWrap}>
+            <DoodleFlame color={details.color} size={18} />
+            <Text style={[styles.statusBadge, { color: details.color }]}>
+              {details.status}
+            </Text>
+          </View>
           <Text style={styles.reelCounterText}>
             {totalReelsToday} / 700 Reels Scrolled
           </Text>
@@ -94,16 +95,23 @@ export const KittenCompanion: React.FC = () => {
       </View>
 
       <View style={styles.body}>
+        {/* Interactive Animated Character (Breathing + Tap-reactive) */}
         <View style={styles.avatarContainer}>
-          <Text style={styles.avatarEmoji}>{details.emoji}</Text>
+          <AnimatedKitten
+            stage={pet.stage}
+            healthPercent={pet.healthPercent}
+            size={95}
+          />
         </View>
 
         <View style={styles.infoContainer}>
-          <Text style={styles.speechText}>{details.speech}</Text>
+          <View style={styles.speechBubble}>
+            <Text style={styles.speechText}>{details.speech}</Text>
+          </View>
 
           {/* Health Bar */}
           <View style={styles.healthHeader}>
-            <Text style={styles.healthLabel}>VITALITY</Text>
+            <Text style={styles.healthLabel}>COMPANION VITALITY</Text>
             <Text style={[styles.healthValue, { color: details.color }]}>
               {pet.healthPercent}% HP
             </Text>
@@ -163,8 +171,9 @@ export const KittenCompanion: React.FC = () => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1.5,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderStyle: 'solid',
     padding: theme.spacing.md,
     marginBottom: theme.spacing.md,
   },
@@ -172,18 +181,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
     borderColor: theme.colors.border,
     padding: theme.spacing.md,
     marginBottom: theme.spacing.md,
   },
-  dormantIcon: {
-    fontSize: 32,
-    marginRight: theme.spacing.md,
-  },
   dormantTextContainer: {
     flex: 1,
+    marginLeft: theme.spacing.sm,
   },
   dormantTitle: {
     fontSize: theme.typography.fontSize.sm,
@@ -212,13 +219,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  titleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   statusBadge: {
     fontSize: 11,
     fontWeight: theme.typography.fontWeight.heavy,
     letterSpacing: 0.5,
+    marginLeft: 4,
   },
   reelCounterText: {
-    fontSize: 11,
+    fontSize: 10,
     color: theme.colors.textSecondary,
     fontWeight: theme.typography.fontWeight.semibold,
   },
@@ -228,26 +240,25 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xs,
   },
   avatarContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: theme.borderRadius.full,
-    backgroundColor: theme.colors.surfaceVariant,
+    marginRight: theme.spacing.sm,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: theme.spacing.md,
-  },
-  avatarEmoji: {
-    fontSize: 32,
   },
   infoContainer: {
     flex: 1,
   },
+  speechBubble: {
+    backgroundColor: theme.colors.surfaceVariant,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: theme.spacing.xs + 2,
+    marginBottom: theme.spacing.xs,
+  },
   speechText: {
-    fontSize: theme.typography.fontSize.xs,
+    fontSize: 11,
     color: theme.colors.textPrimary,
     fontStyle: 'italic',
-    lineHeight: 16,
-    marginBottom: theme.spacing.xs,
+    lineHeight: 15,
   },
   healthHeader: {
     flexDirection: 'row',
@@ -276,10 +287,12 @@ const styles = StyleSheet.create({
   },
   catReportPill: {
     marginTop: theme.spacing.sm,
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    borderRadius: theme.borderRadius.sm,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 10,
     backgroundColor: theme.colors.surfaceVariant,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     alignItems: 'center',
   },
   catReportPillText: {

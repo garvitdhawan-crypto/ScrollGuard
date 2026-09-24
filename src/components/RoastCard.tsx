@@ -2,6 +2,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Share } from 'react-native';
 import { theme } from '../theme';
 import { RoastResult } from '../services/RoastEngine';
+import { DoodleShield, DoodleQuote, DoodleFlame } from './DoodleIcons';
 
 interface RoastCardProps {
   roast: RoastResult | null;
@@ -27,6 +28,8 @@ export const RoastCard: React.FC<RoastCardProps> = ({
     }
   };
 
+  const borderColor = getEscalationBorder();
+
   const handleShare = async () => {
     if (isSharing) {
       return;
@@ -47,47 +50,60 @@ export const RoastCard: React.FC<RoastCardProps> = ({
 
   return (
     <View style={styles.wrapper}>
-      <View style={[styles.card, { borderColor: getEscalationBorder() }]}>
+      {/* Hand-drawn sketch doodle card */}
+      <View style={[styles.card, { borderColor }]}>
+        {/* Hand-drawn Header */}
         <View style={styles.cardHeader}>
           <View style={styles.brandingRow}>
-            <Text style={styles.brandBadge}>🛡️ SCROLLGUARD</Text>
-            <Text style={styles.brandSub}>REALITY CHECK</Text>
+            <DoodleShield color={borderColor} size={24} />
+            <View style={styles.brandTitleWrap}>
+              <Text style={[styles.brandBadge, { color: borderColor }]}>SCROLLGUARD</Text>
+              <Text style={styles.brandSub}>DOODLE REALITY CHECK</Text>
+            </View>
           </View>
-          <Text style={[styles.appBadge, { color: getEscalationBorder() }]}>
-            {appName.toUpperCase()}
-          </Text>
+          <View style={[styles.appBadgePill, { borderColor }]}>
+            <Text style={[styles.appBadge, { color: borderColor }]}>
+              {appName.toUpperCase()}
+            </Text>
+          </View>
         </View>
 
+        {/* Doodle Quote container */}
         <View style={styles.quoteBox}>
-          <Text style={styles.quoteMark}>“</Text>
+          <DoodleQuote color={`${borderColor}44`} size={24} />
           <Text style={styles.roastText}>
             {roast?.message || 'Protecting your focus fortress.'}
           </Text>
-          <Text style={[styles.quoteMark, styles.quoteMarkEnd]}>”</Text>
         </View>
 
+        {/* Sketch footer */}
         <View style={styles.cardFooter}>
           <View style={styles.tagGroup}>
-            <Text style={styles.tag}>
-              LEVEL: {roast?.escalationLevel?.toUpperCase() || 'MILD'}
-            </Text>
-            <Text style={styles.tag}>
-              STYLE: {roast?.roastStyle?.toUpperCase() || 'CALM'}
-            </Text>
+            <View style={styles.doodleTag}>
+              <DoodleFlame color={borderColor} size={14} />
+              <Text style={[styles.tagText, { color: borderColor }]}>
+                {roast?.escalationLevel?.toUpperCase() || 'MILD'}
+              </Text>
+            </View>
+            <View style={styles.doodleTag}>
+              <Text style={styles.tagTextMuted}>
+                STYLE: {roast?.roastStyle?.toUpperCase() || 'CALM'}
+              </Text>
+            </View>
           </View>
-          <Text style={styles.footerAppUrl}>scrollguard.app</Text>
+          <Text style={styles.footerAppUrl}>scrollguard.app ✏️</Text>
         </View>
       </View>
 
       {/* Share Trigger Action */}
       <TouchableOpacity
-        style={styles.shareButton}
+        style={[styles.shareButton, { borderColor }]}
         onPress={handleShare}
         activeOpacity={0.8}
         disabled={isSharing}
       >
-        <Text style={styles.shareButtonText}>
-          {isSharing ? 'Sharing...' : '📤 Share Roast Card'}
+        <Text style={[styles.shareButtonText, { color: borderColor }]}>
+          {isSharing ? 'Sketching Share...' : '📤 Share Roast Doodle Card'}
         </Text>
       </TouchableOpacity>
     </View>
@@ -100,80 +116,97 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 2,
+    borderRadius: 20,
+    borderWidth: 2.5,
+    borderStyle: 'solid',
     padding: theme.spacing.md,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   brandingRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  brandTitleWrap: {
+    marginLeft: 6,
+  },
   brandBadge: {
     fontSize: 11,
     fontWeight: theme.typography.fontWeight.heavy,
-    color: theme.colors.primary,
     letterSpacing: 0.8,
   },
   brandSub: {
-    fontSize: 9,
+    fontSize: 8,
     color: theme.colors.textMuted,
-    marginLeft: 6,
     fontWeight: theme.typography.fontWeight.bold,
+    letterSpacing: 0.5,
+  },
+  appBadgePill: {
+    borderWidth: 1.5,
+    borderRadius: 12,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
   },
   appBadge: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: theme.typography.fontWeight.heavy,
     letterSpacing: 0.5,
   },
   quoteBox: {
-    position: 'relative',
-    paddingHorizontal: theme.spacing.xs,
+    backgroundColor: '#0E131F',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: theme.colors.border,
+    padding: theme.spacing.md,
     marginVertical: theme.spacing.xs,
   },
-  quoteMark: {
-    fontSize: 32,
-    color: theme.colors.surfaceVariant,
-    lineHeight: 28,
-  },
-  quoteMarkEnd: {
-    textAlign: 'right',
-  },
   roastText: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.typography.fontSize.xs + 2,
     color: theme.colors.textPrimary,
     fontWeight: theme.typography.fontWeight.semibold,
-    lineHeight: 22,
+    lineHeight: 20,
     fontStyle: 'italic',
     textAlign: 'center',
-    marginVertical: -8,
+    marginTop: 4,
   },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: theme.spacing.md,
+    marginTop: theme.spacing.sm,
     paddingTop: theme.spacing.xs,
-    borderTopWidth: 1,
+    borderTopWidth: 1.5,
     borderTopColor: theme.colors.border,
   },
   tagGroup: {
     flexDirection: 'row',
+    alignItems: 'center',
   },
-  tag: {
-    fontSize: 9,
-    fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.textMuted,
-    marginRight: 8,
+  doodleTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: theme.colors.surfaceVariant,
     paddingVertical: 2,
     paddingHorizontal: 6,
-    borderRadius: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginRight: 6,
+  },
+  tagText: {
+    fontSize: 9,
+    fontWeight: theme.typography.fontWeight.bold,
+    marginLeft: 2,
+  },
+  tagTextMuted: {
+    fontSize: 9,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.textMuted,
   },
   footerAppUrl: {
     fontSize: 9,
@@ -182,17 +215,16 @@ const styles = StyleSheet.create({
   },
   shareButton: {
     marginTop: theme.spacing.xs,
-    backgroundColor: theme.colors.surfaceVariant,
-    borderWidth: 1,
-    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 2,
+    borderRadius: 14,
     paddingVertical: theme.spacing.xs + 4,
-    borderRadius: theme.borderRadius.md,
     alignItems: 'center',
   },
   shareButtonText: {
     fontSize: theme.typography.fontSize.xs,
     fontWeight: theme.typography.fontWeight.bold,
-    color: theme.colors.primary,
     letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
 });

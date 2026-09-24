@@ -10,6 +10,13 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../theme';
 import { useAppStore, KittenStage } from '../store';
+import {
+  DoodleCatHead,
+  DoodleShield,
+  DoodleFlame,
+  DoodleTombstone,
+  DoodleStar,
+} from '../components/DoodleIcons';
 
 export const CatReportScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -65,21 +72,6 @@ export const CatReportScreen: React.FC = () => {
 
   const narrative = getNarrativeSummary();
 
-  const getStageEmoji = (stage: KittenStage) => {
-    switch (stage) {
-      case 'healthy':
-        return '🐱✨';
-      case 'tired':
-        return '🐱💤';
-      case 'sick':
-        return '😿🌡️';
-      case 'critical':
-        return '🙀💔';
-      case 'dead':
-        return '🪦👻';
-    }
-  };
-
   const getStageColor = (stage: KittenStage) => {
     switch (stage) {
       case 'healthy':
@@ -102,12 +94,12 @@ export const CatReportScreen: React.FC = () => {
 
     try {
       const timelineText = weeklyPetHistory
-        .map((h) => `${h.dayName}: ${h.finalStage.toUpperCase()} ${getStageEmoji(h.finalStage)} (${h.healthPercent}% HP)`)
+        .map((h) => `${h.dayName}: ${h.finalStage.toUpperCase()} (${h.healthPercent}% HP)`)
         .join('\n');
 
       await Share.share({
         title: 'Weekly Kitten Companion Chronicle',
-        message: `🐱 ScrollGuard Weekly Cat Report:\n\n${narrative.title} ${narrative.emoji}\n\n"${narrative.text}"\n\n📊 7-Day Timeline:\n${timelineText}\n\n❤️ Healthy Days: ${healthyDaysCount} | ☠️ Critical/Dead: ${criticalOrDeadDaysCount}\n💖 Revives Used: ${kittenRevivesThisWeek}\n\n🛡️ Defend your focus on ScrollGuard: scrollguard.app`,
+        message: `🐱 ScrollGuard Weekly Cat Report:\n\n${narrative.title}\n\n"${narrative.text}"\n\n📊 7-Day Timeline:\n${timelineText}\n\n❤️ Healthy Days: ${healthyDaysCount} | ☠️ Critical/Dead: ${criticalOrDeadDaysCount}\n💖 Revives Used: ${kittenRevivesThisWeek}\n\n🛡️ Defend your focus on ScrollGuard: scrollguard.app`,
       });
     } finally {
       setIsSharing(false);
@@ -117,16 +109,21 @@ export const CatReportScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Story Card */}
+        {/* Hand-Drawn Doodle Story Card */}
         <View style={styles.storyCard}>
           <View style={styles.header}>
-            <Text style={styles.logoText}>🛡️ SCROLLGUARD</Text>
-            <Text style={styles.subtitle}>WEEKLY CAT REPORT • 7-DAY CHRONICLE</Text>
+            <View style={styles.brandingRow}>
+              <DoodleShield color={theme.colors.primary} size={22} />
+              <Text style={styles.logoText}>SCROLLGUARD</Text>
+            </View>
+            <View style={styles.headerPill}>
+              <Text style={styles.subtitle}>DOODLE CAT CHRONICLE</Text>
+            </View>
           </View>
 
-          {/* Hero Narrative Assessment */}
+          {/* Hero Narrative Assessment with Hand-Drawn Cat */}
           <View style={styles.heroBox}>
-            <Text style={styles.heroEmoji}>{narrative.emoji}</Text>
+            <DoodleCatHead color={narrative.badgeColor} size={48} />
             <Text style={[styles.heroTitle, { color: narrative.badgeColor }]}>
               {narrative.title}
             </Text>
@@ -165,7 +162,7 @@ export const CatReportScreen: React.FC = () => {
                 </View>
 
                 <View style={styles.stateCol}>
-                  <Text style={styles.stageEmoji}>{getStageEmoji(item.finalStage)}</Text>
+                  <DoodleCatHead color={getStageColor(item.finalStage)} size={22} />
                   <View style={styles.stageDetails}>
                     <Text
                       style={[
@@ -192,23 +189,26 @@ export const CatReportScreen: React.FC = () => {
             ))}
           </View>
 
-          {/* Summary Metric Counters */}
+          {/* Summary Metric Counters with Doodle Icons */}
           <View style={styles.metricsGrid}>
             <View style={styles.metricCard}>
+              <DoodleStar color={theme.colors.primary} size={18} />
               <Text style={[styles.metricNum, { color: theme.colors.primary }]}>
                 {healthyDaysCount}d
               </Text>
-              <Text style={styles.metricLabel}>HEALTHY DAYS</Text>
+              <Text style={styles.metricLabel}>HEALTHY</Text>
             </View>
 
             <View style={styles.metricCard}>
+              <DoodleTombstone color={theme.colors.error} size={18} />
               <Text style={[styles.metricNum, { color: theme.colors.error }]}>
                 {criticalOrDeadDaysCount}d
               </Text>
-              <Text style={styles.metricLabel}>CRITICAL / DEAD</Text>
+              <Text style={styles.metricLabel}>CRITICAL</Text>
             </View>
 
             <View style={styles.metricCard}>
+              <DoodleFlame color={theme.colors.accent} size={18} />
               <Text style={[styles.metricNum, { color: theme.colors.accent }]}>
                 {kittenDeathsThisWeek}
               </Text>
@@ -216,6 +216,7 @@ export const CatReportScreen: React.FC = () => {
             </View>
 
             <View style={styles.metricCard}>
+              <DoodleCatHead color={theme.colors.xpGold} size={18} />
               <Text style={[styles.metricNum, { color: theme.colors.xpGold }]}>
                 {kittenRevivesThisWeek}
               </Text>
@@ -266,8 +267,8 @@ const styles = StyleSheet.create({
   storyCard: {
     width: '100%',
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 2,
+    borderRadius: 24,
+    borderWidth: 2.5,
     borderColor: theme.colors.primary,
     padding: theme.spacing.lg,
     alignItems: 'center',
@@ -276,20 +277,35 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     width: '100%',
     marginBottom: theme.spacing.md,
-    borderBottomWidth: 1,
+    borderBottomWidth: 1.5,
+    borderStyle: 'dashed',
     borderBottomColor: theme.colors.border,
-    paddingBottom: theme.spacing.xs,
+    paddingBottom: theme.spacing.sm,
+  },
+  brandingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   logoText: {
     fontSize: 12,
     fontWeight: theme.typography.fontWeight.heavy,
     color: theme.colors.primary,
     letterSpacing: 1,
+    marginLeft: 6,
+  },
+  headerPill: {
+    backgroundColor: theme.colors.surfaceVariant,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   subtitle: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.textMuted,
     letterSpacing: 0.5,
@@ -298,15 +314,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: theme.spacing.md,
   },
-  heroEmoji: {
-    fontSize: 48,
-    marginBottom: 4,
-  },
   heroTitle: {
     fontSize: theme.typography.fontSize.sm + 1,
     fontWeight: theme.typography.fontWeight.heavy,
     letterSpacing: 1,
     textAlign: 'center',
+    marginTop: 6,
   },
   heroText: {
     fontSize: 11,
@@ -319,9 +332,10 @@ const styles = StyleSheet.create({
   },
   currentStateCard: {
     width: '100%',
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
+    backgroundColor: '#0E131F',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
     borderColor: theme.colors.border,
     padding: theme.spacing.sm + 2,
     marginBottom: theme.spacing.md,
@@ -367,10 +381,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: theme.colors.card,
-    paddingVertical: 6,
+    backgroundColor: '#0E131F',
+    paddingVertical: 7,
     paddingHorizontal: theme.spacing.sm,
-    borderRadius: theme.borderRadius.sm,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: theme.colors.border,
     marginBottom: 4,
@@ -393,12 +407,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 6,
   },
-  stageEmoji: {
-    fontSize: 18,
-    marginRight: 6,
-  },
   stageDetails: {
     flex: 1,
+    marginLeft: 6,
   },
   stageName: {
     fontSize: 10,
@@ -442,16 +453,17 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     flex: 0.23,
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.sm,
+    backgroundColor: '#0E131F',
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    paddingVertical: 6,
+    paddingVertical: 8,
     alignItems: 'center',
   },
   metricNum: {
-    fontSize: theme.typography.fontSize.md,
+    fontSize: theme.typography.fontSize.sm + 2,
     fontWeight: theme.typography.fontWeight.heavy,
+    marginTop: 2,
   },
   metricLabel: {
     fontSize: 7,
@@ -472,7 +484,7 @@ const styles = StyleSheet.create({
   shareBtn: {
     width: '100%',
     paddingVertical: theme.spacing.sm + 4,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: 14,
     alignItems: 'center',
     marginBottom: theme.spacing.sm,
   },

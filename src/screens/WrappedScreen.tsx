@@ -10,6 +10,13 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { theme } from '../theme';
 import { useAppStore } from '../store';
+import {
+  DoodleShield,
+  DoodleCatHead,
+  DoodleStar,
+  DoodleFlame,
+  DoodleTombstone,
+} from '../components/DoodleIcons';
 
 export const WrappedScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -31,21 +38,18 @@ export const WrappedScreen: React.FC = () => {
       return {
         title: 'THE DOOMSCROLL GLADIATOR',
         tagline: 'You spent half the week in an algorithmic gladiator arena.',
-        emoji: '⚔️🧟',
         badgeColor: theme.colors.error,
       };
     } else if (weekReelsScrolled >= 300) {
       return {
         title: 'THE ALGORITHM EXPLORER',
         tagline: 'Your thumb has traveled miles through infinite vertical video loops.',
-        emoji: '🧭⚡',
         badgeColor: theme.colors.warning,
       };
     } else {
       return {
         title: 'THE MINDFUL GUARDIAN',
         tagline: 'You preserved your attention fortress and protected your kitten.',
-        emoji: '🏰✨',
         badgeColor: theme.colors.primary,
       };
     }
@@ -72,31 +76,39 @@ export const WrappedScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Vertical Story-Format Spotify-Wrapped Style Card */}
+        {/* Hand-Drawn Doodle Story Card */}
         <View style={styles.storyCard}>
+          {/* Header */}
           <View style={styles.storyHeader}>
-            <Text style={styles.logoText}>🛡️ SCROLLGUARD</Text>
-            <Text style={styles.periodText}>WEEKLY WRAPPED • 2026</Text>
+            <View style={styles.logoGroup}>
+              <DoodleShield color={theme.colors.primary} size={24} />
+              <Text style={styles.logoText}>SCROLLGUARD</Text>
+            </View>
+            <View style={styles.periodPill}>
+              <Text style={styles.periodText}>WEEKLY WRAPPED • 2026</Text>
+            </View>
           </View>
 
-          {/* Hero Archetype */}
+          {/* Hero Archetype with Doodle Star */}
           <View style={styles.archetypeBox}>
-            <Text style={styles.archetypeEmoji}>{archetype.emoji}</Text>
+            <DoodleStar color={archetype.badgeColor} size={42} />
             <Text style={[styles.archetypeBadge, { color: archetype.badgeColor }]}>
               {archetype.title}
             </Text>
-            <Text style={styles.archetypeTagline}>{archetype.tagline}</Text>
+            <Text style={styles.archetypeTagline}>"{archetype.tagline}"</Text>
           </View>
 
-          {/* Stat Highlights */}
+          {/* Sketch Stat Highlights */}
           <View style={styles.statGrid}>
             <View style={styles.statCell}>
+              <DoodleFlame color={theme.colors.primary} size={22} />
               <Text style={styles.statNum}>{weekReelsScrolled}</Text>
               <Text style={styles.statTitle}>REELS FLICKED</Text>
               <Text style={styles.statFootnote}>Shorts & Clips</Text>
             </View>
 
             <View style={styles.statCell}>
+              <DoodleTombstone color={theme.colors.warning} size={22} />
               <Text style={[styles.statNum, { color: theme.colors.warning }]}>
                 {weekHours}h
               </Text>
@@ -105,11 +117,12 @@ export const WrappedScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Kitten Fate Callout */}
+          {/* Kitten Fate Callout with Hand-Drawn Cat */}
           <View style={styles.kittenFateBox}>
-            <Text style={styles.kittenFateIcon}>
-              {pet.isDead ? '🪦' : '🐱'}
-            </Text>
+            <DoodleCatHead
+              color={pet.isDead ? theme.colors.error : theme.colors.primary}
+              size={36}
+            />
             <View style={styles.kittenFateText}>
               <Text style={styles.kittenFateTitle}>
                 KITTEN STATUS: {pet.isDead ? 'FALLEN ANGEL' : 'THRIVING & SAFE'}
@@ -122,7 +135,7 @@ export const WrappedScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Streak & Level */}
+          {/* Streak Bar with Sketch Border */}
           <View style={styles.streakBar}>
             <Text style={styles.streakText}>
               🔥 ACTIVE STREAK: {currentStreak} DAYS (BEST {longestStreak}D)
@@ -131,7 +144,9 @@ export const WrappedScreen: React.FC = () => {
 
           {/* Story Card Footer */}
           <View style={styles.storyFooter}>
-            <Text style={styles.watermark}>Reclaim your mind • scrollguard.app</Text>
+            <Text style={styles.watermark}>
+              Doodle summary • Reclaim your mind • scrollguard.app
+            </Text>
           </View>
         </View>
 
@@ -171,8 +186,8 @@ const styles = StyleSheet.create({
   storyCard: {
     width: '100%',
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 2,
+    borderRadius: 24,
+    borderWidth: 2.5,
     borderColor: theme.colors.primary,
     padding: theme.spacing.lg,
     alignItems: 'center',
@@ -181,42 +196,55 @@ const styles = StyleSheet.create({
   storyHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     width: '100%',
-    marginBottom: theme.spacing.lg,
-    borderBottomWidth: 1,
+    marginBottom: theme.spacing.md,
+    borderBottomWidth: 1.5,
+    borderStyle: 'dashed',
     borderBottomColor: theme.colors.border,
-    paddingBottom: theme.spacing.xs,
+    paddingBottom: theme.spacing.sm,
+  },
+  logoGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   logoText: {
     fontSize: 12,
     fontWeight: theme.typography.fontWeight.heavy,
     color: theme.colors.primary,
     letterSpacing: 1,
+    marginLeft: 6,
+  },
+  periodPill: {
+    backgroundColor: theme.colors.surfaceVariant,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   periodText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: theme.typography.fontWeight.bold,
     color: theme.colors.textMuted,
     letterSpacing: 0.5,
   },
   archetypeBox: {
     alignItems: 'center',
-    marginBottom: theme.spacing.lg,
-  },
-  archetypeEmoji: {
-    fontSize: 48,
-    marginBottom: 6,
+    marginBottom: theme.spacing.md,
   },
   archetypeBadge: {
     fontSize: theme.typography.fontSize.md,
     fontWeight: theme.typography.fontWeight.heavy,
     letterSpacing: 1,
     textAlign: 'center',
+    marginTop: 6,
   },
   archetypeTagline: {
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.textSecondary,
     textAlign: 'center',
+    fontStyle: 'italic',
     marginTop: 4,
     maxWidth: 240,
   },
@@ -228,9 +256,10 @@ const styles = StyleSheet.create({
   },
   statCell: {
     flex: 0.48,
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
+    backgroundColor: '#0E131F',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
     borderColor: theme.colors.border,
     padding: theme.spacing.md,
     alignItems: 'center',
@@ -239,6 +268,7 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.xl,
     fontWeight: theme.typography.fontWeight.heavy,
     color: theme.colors.primary,
+    marginTop: 2,
   },
   statTitle: {
     fontSize: 9,
@@ -256,17 +286,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    backgroundColor: theme.colors.surfaceVariant,
-    padding: theme.spacing.sm + 2,
-    borderRadius: theme.borderRadius.md,
+    backgroundColor: '#0E131F',
+    padding: theme.spacing.sm + 4,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
     marginBottom: theme.spacing.md,
-  },
-  kittenFateIcon: {
-    fontSize: 26,
-    marginRight: theme.spacing.sm,
   },
   kittenFateText: {
     flex: 1,
+    marginLeft: theme.spacing.sm,
   },
   kittenFateTitle: {
     fontSize: 10,
@@ -277,16 +306,18 @@ const styles = StyleSheet.create({
   kittenFateDesc: {
     fontSize: 10,
     color: theme.colors.textSecondary,
-    marginTop: 1,
+    marginTop: 2,
+    lineHeight: 14,
   },
   streakBar: {
     width: '100%',
-    backgroundColor: theme.colors.card,
+    backgroundColor: theme.colors.surfaceVariant,
     paddingVertical: 8,
-    borderRadius: theme.borderRadius.sm,
+    borderRadius: 12,
     alignItems: 'center',
     marginBottom: theme.spacing.md,
-    borderWidth: 1,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
     borderColor: theme.colors.border,
   },
   streakText: {
@@ -299,14 +330,14 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xs,
   },
   watermark: {
-    fontSize: 10,
+    fontSize: 9,
     color: theme.colors.textMuted,
     fontStyle: 'italic',
   },
   actionBtn: {
     width: '100%',
     paddingVertical: theme.spacing.sm + 4,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: 14,
     alignItems: 'center',
     marginBottom: theme.spacing.sm,
   },

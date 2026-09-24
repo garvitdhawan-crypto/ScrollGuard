@@ -1,18 +1,16 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  
 } from 'react-native';
 import { theme } from '../theme';
 import { useAppStore } from '../store';
 import { RoastIntensity } from '../services/RoastEngine';
 import { HabitGuardService } from '../services';
-
-
+import { DoodleShield, DoodleCatHead, DoodleFlame } from '../components/DoodleIcons';
 
 export const OnboardingScreen: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -92,7 +90,7 @@ export const OnboardingScreen: React.FC = () => {
         {/* Step 1: Welcome & Mission */}
         {currentStep === 0 && (
           <View style={styles.stepContainer}>
-            <Text style={styles.heroEmoji}>🏰</Text>
+            <DoodleShield color={theme.colors.primary} size={64} />
             <Text style={styles.stepTitle}>Welcome to ScrollGuard</Text>
             <Text style={styles.stepSubtitle}>Autonomous Dopamine Fortress</Text>
 
@@ -114,7 +112,7 @@ export const OnboardingScreen: React.FC = () => {
         {/* Step 2: Choose Roast Personality */}
         {currentStep === 1 && (
           <View style={styles.stepContainer}>
-            <Text style={styles.heroEmoji}>🔥</Text>
+            <DoodleFlame color={theme.colors.accent} size={60} />
             <Text style={styles.stepTitle}>Select Roast Intensity</Text>
             <Text style={styles.stepSubtitle}>
               How hard should ScrollGuard roast your doom-scrolling?
@@ -158,7 +156,7 @@ export const OnboardingScreen: React.FC = () => {
         {/* Step 3: Kitten Companion Mechanic */}
         {currentStep === 2 && (
           <View style={styles.stepContainer}>
-            <Text style={styles.heroEmoji}>🐱💔</Text>
+            <DoodleCatHead color={theme.colors.primary} size={64} />
             <Text style={styles.stepTitle}>Meet Your Companion</Text>
             <Text style={styles.stepSubtitle}>
               Your doom-scrolling has real emotional stakes
@@ -182,14 +180,22 @@ export const OnboardingScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Step 4: Accessibility Permission & Launch */}
+        {/* Step 4: Accessibility Permission & Prominent Scope Notice */}
         {currentStep === 3 && (
           <View style={styles.stepContainer}>
-            <Text style={styles.heroEmoji}>🛡️</Text>
+            <DoodleShield color={theme.colors.primary} size={54} />
             <Text style={styles.stepTitle}>Shield Setup</Text>
             <Text style={styles.stepSubtitle}>
               Enable Accessibility Service for scroll detection
             </Text>
+
+            {/* Prominent Trust Badge */}
+            <View style={styles.scopeBanner}>
+              <Text style={styles.scopeBadgeText}>🔒 STRICT SCOPE PROMISE</Text>
+              <Text style={styles.scopeBodyText}>
+                ScrollGuard <Text style={styles.scopeHighlight}>only monitors Instagram and YouTube</Text> — nothing else on your phone is ever inspected, read, or collected.
+              </Text>
+            </View>
 
             <View
               style={[
@@ -218,7 +224,7 @@ export const OnboardingScreen: React.FC = () => {
               </View>
 
               <Text style={styles.permExplainer}>
-                ScrollGuard detects vertical scroll gestures in Reels/Shorts to compute health drain without reading on-screen private text.
+                ScrollGuard detects vertical scroll gestures specifically inside Reels and Shorts to compute health drain without reading on-screen private text.
               </Text>
 
               {!isAccessGranted && (
@@ -297,15 +303,12 @@ const styles = StyleSheet.create({
   stepContainer: {
     alignItems: 'center',
   },
-  heroEmoji: {
-    fontSize: 56,
-    marginBottom: theme.spacing.sm,
-  },
   stepTitle: {
     fontSize: theme.typography.fontSize.xl,
     fontWeight: theme.typography.fontWeight.heavy,
     color: theme.colors.textPrimary,
     textAlign: 'center',
+    marginTop: theme.spacing.sm,
   },
   stepSubtitle: {
     fontSize: theme.typography.fontSize.xs + 1,
@@ -375,6 +378,31 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     fontStyle: 'italic',
     marginTop: 4,
+  },
+  scopeBanner: {
+    width: '100%',
+    backgroundColor: '#0E1724',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+  },
+  scopeBadgeText: {
+    fontSize: 10,
+    fontWeight: theme.typography.fontWeight.heavy,
+    color: theme.colors.primary,
+    letterSpacing: 1,
+    marginBottom: 2,
+  },
+  scopeBodyText: {
+    fontSize: 11,
+    color: theme.colors.textPrimary,
+    lineHeight: 16,
+  },
+  scopeHighlight: {
+    color: theme.colors.primary,
+    fontWeight: 'bold',
   },
   permissionBox: {
     width: '100%',

@@ -1,9 +1,10 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView } from 'react-native';
 import { theme } from '../theme';
 import { useAppStore } from '../store';
 import { HabitGuardService } from '../services';
 import { RoastIntensity } from '../services/RoastEngine';
+import { DoodleShield } from '../components/DoodleIcons';
 
 export const SettingsScreen: React.FC = () => {
   const { isGuardActive, toggleGuard, roastIntensity, setRoastIntensity } = useAppStore();
@@ -31,6 +32,17 @@ export const SettingsScreen: React.FC = () => {
       <Text style={styles.title}>Shield & Roast Settings</Text>
       <Text style={styles.subtitle}>Configure privacy-safe detection & escalation levels</Text>
 
+      {/* Prominent Trust Banner - Instagram & YouTube ONLY */}
+      <View style={styles.trustBanner}>
+        <DoodleShield color={theme.colors.primary} size={32} />
+        <View style={styles.trustTextCol}>
+          <Text style={styles.trustHeading}>STRICT APP SCOPE PROMISE</Text>
+          <Text style={styles.trustBody}>
+            ScrollGuard <Text style={styles.trustHighlight}>ONLY monitors Instagram and YouTube</Text> — absolutely nothing else on your phone is inspected, accessed, or observed.
+          </Text>
+        </View>
+      </View>
+
       {/* Accessibility Service Permission Card */}
       <View style={[styles.card, { borderColor: isAccessGranted ? theme.colors.primary : theme.colors.warning }]}>
         <View style={styles.cardHeader}>
@@ -41,17 +53,17 @@ export const SettingsScreen: React.FC = () => {
         </View>
 
         <Text style={styles.cardBody}>
-          ScrollGuard requires Android Accessibility Service to detect when Instagram Reels or YouTube Shorts are actively playing and count scroll gestures.
+          Android's standard system dialog asks for broad access, but ScrollGuard is hardcoded at the OS level to filter exclusively for <Text style={styles.highlightPackage}>com.instagram.android</Text> and <Text style={styles.highlightPackage}>com.google.android.youtube</Text>.
         </Text>
 
         <View style={styles.privacyNote}>
-          <Text style={styles.privacyTitle}>🔒 Privacy First Promise:</Text>
+          <Text style={styles.privacyTitle}>🔒 Privacy First Architecture:</Text>
           <Text style={styles.privacyText}>
-            We do NOT read or transmit personal messages, passwords, or on-screen text. Only app package and scroll motions are observed.
+            We do NOT read messages, bank apps, passwords, or on-screen text. Only physical vertical scroll gestures inside Reels & Shorts are counted.
           </Text>
         </View>
 
-        {/* Item 4: Android 13+ Restricted Settings Guidance Note */}
+        {/* Android 13+ Restricted Settings Guidance Note */}
         <View style={styles.restrictedNote}>
           <Text style={styles.restrictedTitle}>⚠️ Android 13+ "Restricted Setting" Fix:</Text>
           <Text style={styles.restrictedText}>
@@ -156,11 +168,41 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginBottom: theme.spacing.md,
   },
+  trustBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0E1724',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+  },
+  trustTextCol: {
+    flex: 1,
+    marginLeft: theme.spacing.sm,
+  },
+  trustHeading: {
+    fontSize: 10,
+    fontWeight: theme.typography.fontWeight.heavy,
+    color: theme.colors.primary,
+    letterSpacing: 1,
+  },
+  trustBody: {
+    fontSize: 11,
+    color: theme.colors.textPrimary,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  trustHighlight: {
+    color: theme.colors.primary,
+    fontWeight: 'bold',
+  },
   card: {
     backgroundColor: theme.colors.surface,
     padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
+    borderRadius: 18,
+    borderWidth: 1.5,
     borderColor: theme.colors.border,
     marginBottom: theme.spacing.md,
   },
@@ -296,5 +338,9 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.textMuted,
     marginTop: theme.spacing.xs,
+  },
+  highlightPackage: {
+    color: theme.colors.primary,
+    fontWeight: theme.typography.fontWeight.bold,
   },
 });
