@@ -1,7 +1,10 @@
-﻿import { create } from 'zustand';
+import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RoastEngine, RoastIntensity, RoastResult } from '../services/RoastEngine';
+import { FeedbackService } from '../services/FeedbackService';
+import { NotificationService } from '../services/NotificationService';
+import { NativeScrollGuardModule } from '../native/ScrollGuardModule';
 
 export type KittenStage = 'healthy' | 'tired' | 'sick' | 'critical' | 'dead';
 
@@ -104,6 +107,15 @@ interface AppState {
   claimChallengeReward: (challengeId: string) => void;
   dismissCelebrationModal: () => void;
   evaluateChallenges: () => void;
+
+  // Engagement, Feedback & Resilience
+  hapticFeedbackEnabled: boolean;
+  soundEffectsEnabled: boolean;
+  thresholdWarningSentToday: boolean;
+  isAccessibilityRevoked: boolean;
+  setHapticFeedbackEnabled: (enabled: boolean) => void;
+  setSoundEffectsEnabled: (enabled: boolean) => void;
+  checkAccessibilityStatus: () => Promise<boolean>;
 
   // Actions
   toggleGuard: () => void;
@@ -265,6 +277,31 @@ export const useAppStore = create<AppState>()(
 
       lastActiveDate: getTodayDateString(),
 
+      // Engagement, Feedback & Resilience
+      hapticFeedbackEnabled: true,
+      soundEffectsEnabled: false,
+      thresholdWarningSentToday: false,
+      isAccessibilityRevoked: false,
+
+      setHapticFeedbackEnabled: (enabled: boolean) => {
+        FeedbackService.setHapticEnabled(enabled);
+        set({ hapticFeedbackEnabled: enabled });
+      },
+
+      setSoundEffectsEnabled: (enabled: boolean) => {
+        FeedbackService.setSoundEnabled(enabled);
+        set({ soundEffectsEnabled: enabled });
+      },
+
+      checkAccessibilityStatus: async () => {
+        const isEnabled = await NativeScrollGuardModule.isAccessibilityServiceEnabled();
+        const hasOnboarded = get().hasOnboarded;
+        // If the user already finished onboarding but accessibility is disabled, mark as revoked
+        const isRevoked = hasOnboarded && !isEnabled;
+        set({ isAccessibilityRevoked: isRevoked });
+        return isEnabled;
+      },
+
       currentStreak: 0,
       longestStreak: 0,
       dailyReelThreshold: 50,
@@ -340,6 +377,8 @@ export const useAppStore = create<AppState>()(
           const updatedChallenges = state.challenges.map((c) =>
             c.id === challengeId ? { ...c, rewardClaimed: true } : c,
           );
+
+          FeedbackService.onChallengeCompleted();
 
           return {
             challenges: updatedChallenges,
@@ -534,10 +573,21 @@ export const useAppStore = create<AppState>()(
           rewardClaimed: false,
         }));
 
+        if (newStreak > currentStreak && newStreak > 0) {
+          FeedbackService.onStreakMilestone();
+        }
+
+        const isSunday = new Date().getDay() === 0;
+        if (isSunday) {
+          NotificationService.sendWeeklyWrappedNotification();
+          NotificationService.sendWeeklyCatReportNotification();
+        }
+
         set({
           lastActiveDate: today,
           currentStreak: newStreak,
           longestStreak: newLongest,
+          thresholdWarningSentToday: false,
           overridesToday: 0,
           blockedApps: resetApps,
           pet: updatedPet,
@@ -568,8 +618,27 @@ export const useAppStore = create<AppState>()(
             }
             return app;
           });
+
+          const totalReelsToday = updated.reduce(
+            (sum, a) => sum + a.reelsScrolledToday,
+            0,
+          );
+
+          let warningSent = state.thresholdWarningSentToday;
+          if (
+            totalReelsToday >= state.dailyReelThreshold * 0.8 &&
+            !state.thresholdWarningSentToday
+          ) {
+            NotificationService.sendThresholdWarningNotification(
+              totalReelsToday,
+              state.dailyReelThreshold,
+            );
+            warningSent = true;
+          }
+
           return {
             blockedApps: updated,
+            thresholdWarningSentToday: warningSent,
             lifetimeReelsScrolled: state.lifetimeReelsScrolled + 1,
             weekReelsScrolled: state.weekReelsScrolled + 1,
           };
@@ -653,6 +722,10 @@ export const useAppStore = create<AppState>()(
           stage = 'healthy';
         }
 
+        if (stage !== pet.stage) {
+          FeedbackService.onKittenStateChange(stage);
+        }
+
         const wasAlive = !pet.isDead;
         const newDeaths = wasAlive && isDead ? kittenDeathsThisWeek + 1 : kittenDeathsThisWeek;
 
@@ -673,6 +746,7 @@ export const useAppStore = create<AppState>()(
           if (state.pet.revivesRemaining <= 0) {
             return state;
           }
+          FeedbackService.onKittenRevived();
           return {
             kittenRevivesThisWeek: state.kittenRevivesThisWeek + 1,
             pet: {
@@ -721,6 +795,8 @@ export const useAppStore = create<AppState>()(
           intensity: roastIntensity,
         });
 
+        FeedbackService.onRoastRevealed();
+
         set({ currentRoast: roast });
       },
     }),
@@ -739,6 +815,8 @@ export const useAppStore = create<AppState>()(
         roastIntensity: state.roastIntensity,
         xp: state.xp,
         level: state.level,
+        hapticFeedbackEnabled: state.hapticFeedbackEnabled,
+        soundEffectsEnabled: state.soundEffectsEnabled,
         pet: state.pet,
         weeklyPetHistory: state.weeklyPetHistory,
         kittenDeathsThisWeek: state.kittenDeathsThisWeek,

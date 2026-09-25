@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -34,7 +34,13 @@ export const WrappedScreen: React.FC = () => {
 
   // Personality archetype based on weekly volume
   const getWeeklyArchetype = () => {
-    if (weekReelsScrolled >= 600) {
+    if (weekReelsScrolled === 0 && weekMinutesLost === 0) {
+      return {
+        title: 'FIRST WEEK IN PROGRESS 🌱',
+        tagline: 'No reel debt logged this week yet! Your attention fortress is pristine.',
+        badgeColor: theme.colors.primary,
+      };
+    } else if (weekReelsScrolled >= 600) {
       return {
         title: 'THE DOOMSCROLL GLADIATOR',
         tagline: 'You spent half the week in an algorithmic gladiator arena.',
@@ -134,6 +140,16 @@ export const WrappedScreen: React.FC = () => {
               </Text>
             </View>
           </View>
+
+          {/* First-Time Empty / In-Progress Note */}
+          {weekReelsScrolled === 0 && (
+            <View style={styles.firstTimeWrappedNote}>
+              <Text style={styles.firstTimeWrappedTitle}>✨ Welcome to your first week!</Text>
+              <Text style={styles.firstTimeWrappedDesc}>
+                Scroll Wrapped automatically aggregates Sunday recaps as you browse Instagram or YouTube. Stay under your daily limit to preserve your Mindful Guardian tier.
+              </Text>
+            </View>
+          )}
 
           {/* Streak Bar with Sketch Border */}
           <View style={styles.streakBar}>
@@ -355,5 +371,26 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.textSecondary,
     fontWeight: theme.typography.fontWeight.semibold,
+  },
+  firstTimeWrappedNote: {
+    backgroundColor: 'rgba(0, 255, 163, 0.08)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 255, 163, 0.25)',
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    alignItems: 'center',
+  },
+  firstTimeWrappedTitle: {
+    fontSize: theme.typography.fontSize.xs + 1,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.primary,
+    marginBottom: 4,
+  },
+  firstTimeWrappedDesc: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 16,
   },
 });

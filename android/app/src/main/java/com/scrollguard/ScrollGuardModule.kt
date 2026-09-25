@@ -1,4 +1,4 @@
-﻿package com.scrollguard
+package com.scrollguard
 
 import android.content.Context
 import android.content.Intent
@@ -79,6 +79,40 @@ class ScrollGuardModule(reactContext: ReactApplicationContext) :
             result.putDouble("timeSpentSeconds", 0.0)
         }
         promise.resolve(result)
+    }
+
+    @ReactMethod
+    fun playSoundEffect(soundType: String) {
+        try {
+            val context = reactApplicationContext
+            val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? android.media.AudioManager
+            when (soundType) {
+                "success" -> {
+                    val tg = android.media.ToneGenerator(android.media.AudioManager.STREAM_NOTIFICATION, 60)
+                    tg.startTone(android.media.ToneGenerator.TONE_PROP_ACK, 200)
+                }
+                "warning" -> {
+                    val tg = android.media.ToneGenerator(android.media.AudioManager.STREAM_NOTIFICATION, 70)
+                    tg.startTone(android.media.ToneGenerator.TONE_PROP_BEEP, 250)
+                }
+                "danger" -> {
+                    val tg = android.media.ToneGenerator(android.media.AudioManager.STREAM_NOTIFICATION, 80)
+                    tg.startTone(android.media.ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 350)
+                }
+                "tap" -> {
+                    audioManager?.playSoundEffect(android.media.AudioManager.FX_KEY_CLICK)
+                }
+                "milestone" -> {
+                    val tg = android.media.ToneGenerator(android.media.AudioManager.STREAM_NOTIFICATION, 75)
+                    tg.startTone(android.media.ToneGenerator.TONE_SUP_CONFIRM, 300)
+                }
+                else -> {
+                    audioManager?.playSoundEffect(android.media.AudioManager.FX_KEY_CLICK)
+                }
+            }
+        } catch (e: Exception) {
+            // Non-critical sound fallback
+        }
     }
 
     @ReactMethod

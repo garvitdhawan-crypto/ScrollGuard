@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, AppState, AppStateStatus } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -6,35 +6,39 @@ import { theme } from '../theme';
 import { useAppStore } from '../store';
 import { RootStackParamList } from '../navigation/types';
 import { HabitGuardService } from '../services';
-import { KittenCompanion, RoastCard } from '../components';
+import { KittenCompanion, RoastCard, PermissionRevokedBanner } from '../components';
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const {
-    currentStreak,
-    longestStreak,
-    xp,
-    isGuardActive,
-    toggleGuard,
-    currentRoast,
-    isLockActive,
-    recordReelScroll,
-    updateScreenTime,
-    checkAndPerformDailyRollover,
-  } = useAppStore();
+
+  // Granular selectors to prevent unnecessary full-screen re-renders
+  const currentStreak = useAppStore((s) => s.currentStreak);
+  const longestStreak = useAppStore((s) => s.longestStreak);
+  const xp = useAppStore((s) => s.xp);
+  const isGuardActive = useAppStore((s) => s.isGuardActive);
+  const toggleGuard = useAppStore((s) => s.toggleGuard);
+  const currentRoast = useAppStore((s) => s.currentRoast);
+  const isLockActive = useAppStore((s) => s.isLockActive);
+  const checkAccessibilityStatus = useAppStore((s) => s.checkAccessibilityStatus);
+  const checkAndPerformDailyRollover = useAppStore((s) => s.checkAndPerformDailyRollover);
 
   const appState = useRef(AppState.currentState);
 
-  // Run daily rollover check on mount and whenever app returns to foreground
-  useEffect(() => {
+  const handleForegroundCheck = useCallback(() => {
     checkAndPerformDailyRollover();
+    checkAccessibilityStatus();
+  }, [checkAndPerformDailyRollover, checkAccessibilityStatus]);
+
+  // Run rollover and accessibility checks on mount and foreground
+  useEffect(() => {
+    handleForegroundCheck();
 
     const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
       if (
         (appState.current || '').match(/inactive|background/) &&
         nextAppState === 'active'
       ) {
-        checkAndPerformDailyRollover();
+        handleForegroundCheck();
       }
       appState.current = nextAppState;
     });
@@ -42,20 +46,20 @@ export const HomeScreen: React.FC = () => {
     return () => {
       subscription.remove();
     };
-  }, [checkAndPerformDailyRollover]);
+  }, [handleForegroundCheck]);
 
-  // Listen for live native accessibility events
+  // Stable listener for live native accessibility events using store getState
   useEffect(() => {
     const unsubscribe = HabitGuardService.subscribeToEvents({
       onReelScrolled: (event) => {
-        recordReelScroll(event.source);
+        useAppStore.getState().recordReelScroll(event.source);
       },
       onScreenTimeUpdate: (event) => {
-        updateScreenTime(event.source, Math.floor(event.secondsSpent));
+        useAppStore.getState().updateScreenTime(event.source, Math.floor(event.secondsSpent));
       },
     });
     return () => unsubscribe();
-  }, [recordReelScroll, updateScreenTime]);
+  }, []);
 
   // Navigate to lock overlay when triggered
   useEffect(() => {
@@ -66,6 +70,7 @@ export const HomeScreen: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <PermissionRevokedBanner />
       <View style={styles.header}>
         <View style={styles.topRow}>
           <Text style={styles.title}>ScrollGuard</Text>

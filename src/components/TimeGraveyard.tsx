@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../theme';
 import { useAppStore } from '../store';
@@ -43,32 +43,42 @@ export const TimeGraveyard: React.FC = () => {
 
       <Text style={styles.sectionHeading}>YOUR SCROLL DEBT (EQUIVALENTS)</Text>
 
-      {/* Tombstone Milestone Cards */}
-      <View style={styles.tombstoneGrid}>
-        <View style={styles.tombstone}>
-          <Text style={styles.tombIcon}>💤</Text>
-          <Text style={styles.tombHeadline}>{sleepLostDays} Days</Text>
-          <Text style={styles.tombDesc}>Deep, restorative sleep flushed away</Text>
+      {/* Tombstone Milestone Cards or Clean Empty State */}
+      {lifetimeMinutesLost === 0 ? (
+        <View style={styles.emptyCard}>
+          <Text style={styles.emptyIcon}>🌱✨</Text>
+          <Text style={styles.emptyHeadline}>The Graveyard is Pristine & Empty!</Text>
+          <Text style={styles.emptyDesc}>
+            You haven't buried any lost hours yet. Your time and focus remain unbroken. As you scroll reels or shorts, this ledger tracks missed sleep, unread books, and skipped workouts to keep you accountable.
+          </Text>
         </View>
+      ) : (
+        <View style={styles.tombstoneGrid}>
+          <View style={styles.tombstone}>
+            <Text style={styles.tombIcon}>💤</Text>
+            <Text style={styles.tombHeadline}>{sleepLostDays} Days</Text>
+            <Text style={styles.tombDesc}>Deep, restorative sleep flushed away</Text>
+          </View>
 
-        <View style={styles.tombstone}>
-          <Text style={styles.tombIcon}>📚</Text>
-          <Text style={styles.tombHeadline}>{novelsMissed} Books</Text>
-          <Text style={styles.tombDesc}>Unread masterworks replaced by 15s clips</Text>
-        </View>
+          <View style={styles.tombstone}>
+            <Text style={styles.tombIcon}>📚</Text>
+            <Text style={styles.tombHeadline}>{novelsMissed} Books</Text>
+            <Text style={styles.tombDesc}>Unread masterworks replaced by 15s clips</Text>
+          </View>
 
-        <View style={styles.tombstone}>
-          <Text style={styles.tombIcon}>🏋️</Text>
-          <Text style={styles.tombHeadline}>{workoutsSkipped} Workouts</Text>
-          <Text style={styles.tombDesc}>Skipped gym sessions while sitting paralyzed</Text>
-        </View>
+          <View style={styles.tombstone}>
+            <Text style={styles.tombIcon}>🏋️</Text>
+            <Text style={styles.tombHeadline}>{workoutsSkipped} Workouts</Text>
+            <Text style={styles.tombDesc}>Skipped gym sessions while sitting paralyzed</Text>
+          </View>
 
-        <View style={styles.tombstone}>
-          <Text style={styles.tombIcon}>🎬</Text>
-          <Text style={styles.tombHeadline}>{moviesMissed} Films</Text>
-          <Text style={styles.tombDesc}>Full cinematic stories you "didn't have time" for</Text>
+          <View style={styles.tombstone}>
+            <Text style={styles.tombIcon}>🎬</Text>
+            <Text style={styles.tombHeadline}>{moviesMissed} Films</Text>
+            <Text style={styles.tombDesc}>Full cinematic stories you "didn't have time" for</Text>
+          </View>
         </View>
-      </View>
+      )}
     </View>
   );
 };
@@ -156,5 +166,31 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
     lineHeight: 14,
+  },
+  emptyCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 255, 163, 0.25)',
+    padding: theme.spacing.lg,
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  emptyIcon: {
+    fontSize: 32,
+    marginBottom: theme.spacing.xs,
+  },
+  emptyHeadline: {
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.primary,
+    textAlign: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  emptyDesc: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });

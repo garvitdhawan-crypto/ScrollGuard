@@ -1,4 +1,4 @@
-﻿import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
+import { NativeEventEmitter, NativeModules, Platform } from 'react-native';
 
 export interface ReelScrolledEvent {
   source: 'com.instagram.android' | 'com.google.android.youtube' | string;
@@ -27,6 +27,7 @@ interface ScrollGuardNativeModuleInterface {
   isAccessibilityServiceEnabled: () => Promise<boolean>;
   openAccessibilitySettings: () => void;
   getSessionStats: (packageName: string) => Promise<SessionStats>;
+  playSoundEffect: (soundType: 'success' | 'warning' | 'danger' | 'tap' | 'milestone') => void;
   addListener: (eventName: string) => void;
   removeListeners: (count: number) => void;
 }
@@ -41,6 +42,11 @@ export const NativeScrollGuardModule: ScrollGuardNativeModuleInterface = {
   openAccessibilitySettings: () => {
     if (Platform.OS === 'android') {
       ScrollGuardModule?.openAccessibilitySettings?.();
+    }
+  },
+  playSoundEffect: (soundType) => {
+    if (Platform.OS === 'android') {
+      ScrollGuardModule?.playSoundEffect?.(soundType);
     }
   },
   getSessionStats: async (packageName: string) => {

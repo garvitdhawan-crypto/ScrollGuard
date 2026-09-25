@@ -1,4 +1,4 @@
-﻿import React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -181,15 +181,44 @@ export const ChallengesScreen: React.FC = () => {
         </View>
       </View>
 
+      {/* First-Time User Guidance Banner */}
+      {lifetimeChallengesCompleted === 0 && (
+        <View style={styles.firstTimeTipCard}>
+          <Text style={styles.firstTimeTipIcon}>💡</Text>
+          <View style={styles.firstTimeTipTextCol}>
+            <Text style={styles.firstTimeTipTitle}>How Challenge Mode Works</Text>
+            <Text style={styles.firstTimeTipDesc}>
+              Progress tracks automatically as you use your device. Stay disciplined, clear 10 challenges, and unlock 1 Full Year of Free Premium!
+            </Text>
+          </View>
+        </View>
+      )}
+
       {/* Daily Challenges */}
       <Text style={styles.sectionHeading}>📅 DAILY CHALLENGES</Text>
-      {dailyQuests.map(renderChallengeCard)}
+      {dailyQuests.length > 0 ? (
+        dailyQuests.map(renderChallengeCard)
+      ) : (
+        <View style={styles.emptyQuestCard}>
+          <Text style={styles.emptyQuestIcon}>⏳</Text>
+          <Text style={styles.emptyQuestTitle}>No Daily Quests Right Now</Text>
+          <Text style={styles.emptyQuestDesc}>New daily discipline challenges will spawn at midnight rollover.</Text>
+        </View>
+      )}
 
       {/* Weekly Challenges */}
       <Text style={[styles.sectionHeading, { marginTop: theme.spacing.md }]}>
         🛡️ WEEKLY SPRINT QUESTS
       </Text>
-      {weeklyQuests.map(renderChallengeCard)}
+      {weeklyQuests.length > 0 ? (
+        weeklyQuests.map(renderChallengeCard)
+      ) : (
+        <View style={styles.emptyQuestCard}>
+          <Text style={styles.emptyQuestIcon}>🛡️</Text>
+          <Text style={styles.emptyQuestTitle}>No Weekly Sprints Active</Text>
+          <Text style={styles.emptyQuestDesc}>Weekly quests refresh every Sunday evening.</Text>
+        </View>
+      )}
 
       {/* 1-Year Premium Celebration Modal */}
       <Modal
@@ -480,5 +509,57 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeight.heavy,
     color: '#000',
     textTransform: 'uppercase',
+  },
+  firstTimeTipCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 255, 163, 0.25)',
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    gap: theme.spacing.sm,
+  },
+  firstTimeTipIcon: {
+    fontSize: 24,
+  },
+  firstTimeTipTextCol: {
+    flex: 1,
+  },
+  firstTimeTipTitle: {
+    fontSize: theme.typography.fontSize.xs + 1,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.primary,
+    marginBottom: 2,
+  },
+  firstTimeTipDesc: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.textSecondary,
+    lineHeight: 16,
+  },
+  emptyQuestCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: theme.spacing.lg,
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  emptyQuestIcon: {
+    fontSize: 26,
+    marginBottom: 4,
+  },
+  emptyQuestTitle: {
+    fontSize: theme.typography.fontSize.xs + 1,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.textPrimary,
+    marginBottom: 2,
+  },
+  emptyQuestDesc: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.textMuted,
+    textAlign: 'center',
   },
 });

@@ -2,13 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView } from 'react-native';
 import { theme } from '../theme';
 import { useAppStore } from '../store';
-import { HabitGuardService } from '../services';
+import { HabitGuardService, FeedbackService, NotificationService } from '../services';
 import { RoastIntensity } from '../services/RoastEngine';
 import { DoodleShield } from '../components/DoodleIcons';
 
 export const SettingsScreen: React.FC = () => {
-  const { isGuardActive, toggleGuard, roastIntensity, setRoastIntensity } = useAppStore();
+  const {
+    isGuardActive,
+    toggleGuard,
+    roastIntensity,
+    setRoastIntensity,
+    hapticFeedbackEnabled,
+    setHapticFeedbackEnabled,
+    soundEffectsEnabled,
+    setSoundEffectsEnabled,
+  } = useAppStore();
   const [isAccessGranted, setIsAccessGranted] = useState(false);
+  const [testNotificationSent, setTestNotificationSent] = useState(false);
 
   const checkPermission = async () => {
     const granted = await HabitGuardService.isAccessibilityEnabled();
@@ -23,6 +33,26 @@ export const SettingsScreen: React.FC = () => {
 
   const handleOpenAccessibility = () => {
     HabitGuardService.openSettings();
+  };
+
+  const handleToggleHaptic = (value: boolean) => {
+    setHapticFeedbackEnabled(value);
+    if (value) {
+      FeedbackService.triggerHaptic('impactMedium');
+    }
+  };
+
+  const handleToggleSound = (value: boolean) => {
+    setSoundEffectsEnabled(value);
+    if (value) {
+      FeedbackService.triggerSound('success');
+    }
+  };
+
+  const handleTestNotification = async () => {
+    await NotificationService.sendThresholdWarningNotification(400, 500);
+    setTestNotificationSent(true);
+    setTimeout(() => setTestNotificationSent(false), 3000);
   };
 
   const intensities: RoastIntensity[] = ['Friendly', 'Funny', 'Savage', 'Nuclear'];
@@ -144,6 +174,70 @@ export const SettingsScreen: React.FC = () => {
           trackColor={{ false: theme.colors.surfaceVariant, true: theme.colors.primary }}
           thumbColor={isGuardActive ? theme.colors.textPrimary : theme.colors.textMuted}
         />
+      </View>
+
+      {/* Sensory Feedback & Sound Settings */}
+      <View style={styles.card}>
+        <Text style={styles.cardHeaderTitle}>Tactile & Audio Feedback</Text>
+        <Text style={styles.cardBody}>
+          Customize sensory cues for milestone events, kitten health shifts, and roasts:
+        </Text>
+
+        {/* Haptic Feedback Switch */}
+        <View style={styles.settingItemRow}>
+          <View style={styles.settingItemText}>
+            <Text style={styles.settingItemTitle}>📳 Haptic Vibration</Text>
+            <Text style={styles.settingItemDesc}>
+              Tactile vibrations on streak milestones, challenge clears, and warnings
+            </Text>
+          </View>
+          <Switch
+            value={hapticFeedbackEnabled}
+            onValueChange={handleToggleHaptic}
+            trackColor={{ false: theme.colors.surfaceVariant, true: theme.colors.primary }}
+            thumbColor={hapticFeedbackEnabled ? theme.colors.textPrimary : theme.colors.textMuted}
+          />
+        </View>
+
+        {/* Sound Effects Switch */}
+        <View style={[styles.settingItemRow, styles.settingItemRowBorder]}>
+          <View style={styles.settingItemText}>
+            <Text style={styles.settingItemTitle}>🔔 Sound Effects (Audio Cues)</Text>
+            <Text style={styles.settingItemDesc}>
+              Short, gentle audio tones (default OFF to keep quiet in public)
+            </Text>
+          </View>
+          <Switch
+            value={soundEffectsEnabled}
+            onValueChange={handleToggleSound}
+            trackColor={{ false: theme.colors.surfaceVariant, true: theme.colors.primary }}
+            thumbColor={soundEffectsEnabled ? theme.colors.textPrimary : theme.colors.textMuted}
+          />
+        </View>
+      </View>
+
+      {/* Local Notifications Card */}
+      <View style={styles.card}>
+        <Text style={styles.cardHeaderTitle}>Local Push Notifications</Text>
+        <Text style={styles.cardBody}>
+          ScrollGuard runs 100% offline. Alerts are scheduled locally on your device without sending any telemetry to remote servers.
+        </Text>
+
+        <View style={styles.bulletList}>
+          <Text style={styles.bulletItem}>• ⚠️ 80% Daily Limit Warnings when approaching reel thresholds</Text>
+          <Text style={styles.bulletItem}>• 🐱 Daily Inactivity Reminders if you haven't checked in by evening</Text>
+          <Text style={styles.bulletItem}>• ✨ Weekly Scroll Wrapped & Cat Report ready summaries</Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.testNotificationButton}
+          onPress={handleTestNotification}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.testNotificationButtonText}>
+            {testNotificationSent ? '✓ Alert Dispatched!' : 'Send Sample 80% Alert 🔔'}
+          </Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -342,5 +436,56 @@ const styles = StyleSheet.create({
   highlightPackage: {
     color: theme.colors.primary,
     fontWeight: theme.typography.fontWeight.bold,
+  },
+  settingItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: theme.spacing.sm,
+  },
+  settingItemRowBorder: {
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    marginTop: theme.spacing.xs,
+    paddingTop: theme.spacing.sm + 4,
+  },
+  settingItemText: {
+    flex: 1,
+    paddingRight: theme.spacing.md,
+  },
+  settingItemTitle: {
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.textPrimary,
+  },
+  settingItemDesc: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.textMuted,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  bulletList: {
+    marginTop: theme.spacing.xs,
+    marginBottom: theme.spacing.md,
+  },
+  bulletItem: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.textSecondary,
+    marginBottom: 4,
+    lineHeight: 18,
+  },
+  testNotificationButton: {
+    backgroundColor: theme.colors.surfaceVariant,
+    paddingVertical: theme.spacing.sm + 2,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.sm,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+  },
+  testNotificationButtonText: {
+    fontSize: theme.typography.fontSize.xs,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.primary,
   },
 });

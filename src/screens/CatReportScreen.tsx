@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -39,7 +39,14 @@ export const CatReportScreen: React.FC = () => {
 
   // Narrative summary generator
   const getNarrativeSummary = () => {
-    if (criticalOrDeadDaysCount >= 3 || kittenDeathsThisWeek >= 2) {
+    if (weeklyPetHistory.length === 0) {
+      return {
+        title: 'COMPANION JOURNEY JUST BEGUN 🐾',
+        badgeColor: theme.colors.primary,
+        emoji: '🐱🌱',
+        text: 'Your kitten is taking its very first steps! Day-by-day survival logs will populate here each evening at midnight rollover. Keep your scrolling disciplined to ensure your kitten thrives.',
+      };
+    } else if (criticalOrDeadDaysCount >= 3 || kittenDeathsThisWeek >= 2) {
       return {
         title: 'AN AGONIZING WEEK FOR YOUR COMPANION',
         badgeColor: theme.colors.error,
@@ -154,39 +161,49 @@ export const CatReportScreen: React.FC = () => {
           {/* 7-Day Day-by-Day Timeline */}
           <Text style={styles.timelineHeading}>📅 7-DAY COMPANION TIMELINE</Text>
           <View style={styles.timelineList}>
-            {weeklyPetHistory.map((item, index) => (
-              <View key={`${item.date}-${index}`} style={styles.timelineRow}>
-                <View style={styles.dayCol}>
-                  <Text style={styles.dayName}>{item.dayName}</Text>
-                  <Text style={styles.dayDate}>{item.date.slice(5)}</Text>
-                </View>
+            {weeklyPetHistory.length > 0 ? (
+              weeklyPetHistory.map((item, index) => (
+                <View key={`${item.date}-${index}`} style={styles.timelineRow}>
+                  <View style={styles.dayCol}>
+                    <Text style={styles.dayName}>{item.dayName}</Text>
+                    <Text style={styles.dayDate}>{item.date.slice(5)}</Text>
+                  </View>
 
-                <View style={styles.stateCol}>
-                  <DoodleCatHead color={getStageColor(item.finalStage)} size={22} />
-                  <View style={styles.stageDetails}>
-                    <Text
-                      style={[
-                        styles.stageName,
-                        { color: getStageColor(item.finalStage) },
-                      ]}
-                    >
-                      {item.finalStage.toUpperCase()}
-                    </Text>
-                    <Text style={styles.stageSub}>
-                      {item.reelsScrolled} reels • {item.healthPercent}% HP
-                    </Text>
+                  <View style={styles.stateCol}>
+                    <DoodleCatHead color={getStageColor(item.finalStage)} size={22} />
+                    <View style={styles.stageDetails}>
+                      <Text
+                        style={[
+                          styles.stageName,
+                          { color: getStageColor(item.finalStage) },
+                        ]}
+                      >
+                        {item.finalStage.toUpperCase()}
+                      </Text>
+                      <Text style={styles.stageSub}>
+                        {item.reelsScrolled} reels • {item.healthPercent}% HP
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.tagCol}>
+                    {item.died && <Text style={styles.diedTag}>DIED</Text>}
+                    {item.revived && <Text style={styles.revivedTag}>REVIVED</Text>}
+                    {!item.died && !item.revived && (
+                      <Text style={styles.normalTag}>SURVIVED</Text>
+                    )}
                   </View>
                 </View>
-
-                <View style={styles.tagCol}>
-                  {item.died && <Text style={styles.diedTag}>DIED</Text>}
-                  {item.revived && <Text style={styles.revivedTag}>REVIVED</Text>}
-                  {!item.died && !item.revived && (
-                    <Text style={styles.normalTag}>SURVIVED</Text>
-                  )}
-                </View>
+              ))
+            ) : (
+              <View style={styles.emptyTimelineCard}>
+                <Text style={styles.emptyTimelineIcon}>🐾🌱</Text>
+                <Text style={styles.emptyTimelineTitle}>Day 1 of Your Journey!</Text>
+                <Text style={styles.emptyTimelineDesc}>
+                  Your companion is just beginning its week. Daily survival logs are archived here each night at midnight rollover.
+                </Text>
               </View>
-            ))}
+            )}
           </View>
 
           {/* Summary Metric Counters with Doodle Icons */}
@@ -502,5 +519,30 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.xs,
     color: theme.colors.textSecondary,
     fontWeight: theme.typography.fontWeight.semibold,
+  },
+  emptyTimelineCard: {
+    backgroundColor: theme.colors.surfaceVariant,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 255, 163, 0.25)',
+    padding: theme.spacing.lg,
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  emptyTimelineIcon: {
+    fontSize: 26,
+    marginBottom: 4,
+  },
+  emptyTimelineTitle: {
+    fontSize: theme.typography.fontSize.xs + 1,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.primary,
+    marginBottom: 4,
+  },
+  emptyTimelineDesc: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 16,
   },
 });
